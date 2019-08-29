@@ -1,56 +1,20 @@
 // ==UserScript==
-// @name        ETTWikiHelper-Thumbnail
+// @name        ETTHelper-Thumbnail
 // @name:zh-CN	E绅士标签翻译辅助工具-缩略图
 // @namespace   http://www.mapaler.com/
-// @description Help to get thumbnail for write EhTagTranslator's wiki info.
-// @description:zh-CN	自动将E绅士大缩略图域名改为手机站域名，并可以一键复制各站点格式的缩略图。
+// @description Help to get thumbnail for write EhTagTranslation's translation detail.
+// @description:zh-CN	一键复制E绅士的缩略图，便于书写标签翻译项目的详细介绍。
 // @include     /^https?://(exhentai\.org|e-hentai\.org)/$/
 // @include     /^https?://(exhentai\.org|e-hentai\.org)/g/\d+/\w+/.*$/
 // @include     /^https?://(exhentai\.org|e-hentai\.org)/(index\.php)?\?.*$/
 // @include     /^https?://(exhentai\.org|e-hentai\.org)/(tag|uploader)/.*$/
 // @include     /^https?://(exhentai\.org|e-hentai\.org)/(doujinshi|manga|artistcg|gamecg|western|non-h|imageset|cosplay|asianporn|misc).*$/
-// @version     2.1.0
+// @version     2.1.1
 // @grant       GM_setClipboard
+// @grant       GM_notification
 // @author      Mapaler <mapaler@163.com>
 // @copyright	2017+, Mapaler <mapaler@163.com>
 // ==/UserScript==
-				
-//没有扩展时的debug
-if(typeof(GM_setClipboard) == "undefined")
-{
-	var GM_setClipboard = function(str){
-		prompt(str,str);
-		console.debug("使用GM_setClipboard，值为",str);
-	}
-}
-
-//发送网页通知
-function spawnNotification(theBody, theIcon, theTitle)
-{
-	var options = {
-		body: theBody,
-		icon: theIcon
-	}
-	if (!("Notification" in window))
-	{
-		alert(theBody);
-	}
-	else if (Notification.permission === "granted") {
-		Notification.requestPermission(function (permission) {
-		// If the user is okay, let's create a notification
-		var n = new Notification(theTitle, options);
-		});
-	}
-	// Otherwise, we need to ask the user for permission
-	else if (Notification.permission !== 'denied') {
-		Notification.requestPermission(function (permission) {
-		// If the user is okay, let's create a notification
-		if (permission === "granted") {
-			var n = new Notification(theTitle, options);
-		}
-		});
-	}
-}
 
 var thumbnailPattern = "https?://(\\d+\\.\\d+\\.\\d+\\.\\d+|ul\\.ehgt\\.org|ehgt\\.org|exhentai\\.org)(?:/t)?/(\\w+)/(\\w+)/(\\w+)\-(\\d+)\-(\\d+)\-(\\d+)\-(\\w+)_(l|250).jpg"; //缩略图地址正则匹配式
 var gdtlObj = function(){
@@ -138,7 +102,7 @@ var gdtlObj = function(){
 						typeName = "R18G限制级 MD格式图片地址";
 					}
 					GM_setClipboard(str);
-					spawnNotification(str,href,"已复制到剪贴板 - " +　typeName);
+					GM_notification(str,href,"已复制到剪贴板 - " +　typeName);
 				}
 				
 				li.appendChild(btn);

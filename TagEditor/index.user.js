@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name        ETTWikiHelper-TagEditer
+// @name        ETTHelper-TagEditer
 // @name:zh-CN	E绅士标签翻译辅助工具-标签编辑
 // @namespace   http://www.mapaler.com/
 // @description Help to edit the gallery's tags.
-// @description:zh-CN	辅助编辑画廊的标签
+// @description:zh-CN	辅助编辑E绅士画廊的标签
 // @include     /^https?://(exhentai\.org|e-hentai\.org)/g/\d+/\w+/.*$/
 // @version     1.4.2
 // @author      Mapaler <mapaler@163.com>
