@@ -4,8 +4,9 @@
 // @namespace   http://www.mapaler.com/
 // @description Help to edit the gallery's tags.
 // @description:zh-CN	辅助编辑E绅士画廊的标签
-// @include     /^https?://(exhentai\.org|e-hentai\.org)/g/\d+/\w+/.*$/
-// @version     1.4.2
+// @include     *://exhentai.org/g/*
+// @include     *://e-hentai.org/g/*
+// @version     1.4.3
 // @author      Mapaler <mapaler@163.com>
 // @copyright	2019+, Mapaler <mapaler@163.com>
 // @grant       GM_registerMenuCommand
