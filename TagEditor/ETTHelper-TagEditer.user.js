@@ -6,7 +6,7 @@
 // @description:zh-CN	辅助编辑E绅士画廊的标签
 // @include     *://exhentai.org/g/*
 // @include     *://e-hentai.org/g/*
-// @version     1.4.3
+// @version     1.4.5
 // @author      Mapaler <mapaler@163.com>
 // @copyright	2019+, Mapaler <mapaler@163.com>
 // @grant       GM_registerMenuCommand
@@ -280,8 +280,20 @@ GM_registerMenuCommand("重置浮动窗位置与透明度", function(){
 	GM_deleteValue("floatwindow-opacity");
 });
 
+var nameSpaceC = {
+	artist:"艺术家",
+	female:"女性",
+	male:"男性",
+	parody:"原作",
+	character:"角色",
+	group:"团队",
+	language:"语言",
+	reclass:"重新分类",
+	misc:"杂项"
+};
 //获取标签数据列表
 var tagdatalist = document.querySelector("#tbs-tags");
+var tagData;
 //获取真实标签输入框
 var newTagText = document.querySelector("#newtagfield");
 if (!tagdatalist) //没有ETS，但有ETS扩展版的处理方式
@@ -289,19 +301,8 @@ if (!tagdatalist) //没有ETS，但有ETS扩展版的处理方式
 	var tagDataStr = localStorage.getItem("EhSyringe.tag-list"); //ETS扩展版1.2.1的数据
 	if (typeof(tagDataStr) == "string")
 	{
-		var nameSpaceC = {
-			artist:"艺术家",
-			female:"女性",
-			male:"男性",
-			parody:"原作",
-			character:"角色",
-			group:"团队",
-			language:"语言",
-			reclass:"重新分类",
-			misc:"杂项"
-		};
-		var tagData = JSON.parse(tagDataStr);
-		var tagdatalist = document.createElement("datalist");
+		tagData = JSON.parse(tagDataStr);
+		tagdatalist = document.createElement("datalist");
 		tagdatalist.id = "tbs-tags";
 		newTagText.setAttribute("list","tbs-tags");
 		tagData.forEach(function(tag){
@@ -332,51 +333,86 @@ if (tagdatalist) //如果存在则生成标签搜索框
 
 	iptTagSearch.onkeypress = function(e){
 		if(e.keyCode==13){ //回车，将内容附加到真实Tag框，并清空搜索框
-			if (this.value == 0)
-			{ //如果什么都没输入
+			var _this = this;
+			if (_this.value.length == 0)
+			{ //如果什么都没输入，相当于提交
 				spnTagSearchInfo.innerHTML = "";
 				aTagSearchInfo.removeAttribute("id");
 				aTagSearchInfo.innerHTML = "";
 				if (newTagText.value.length > 0)tag_from_field(); //如果输入框有内容点击Tag提交
 				return;
 			};
+
 			var clabel = false, useGuess = false, guess = false;
-			if (this.value.replace(/[\w\:\"\s\-\.\'\$]/,"").length>0) useGuess = true; //如果存在非tag字符，则尝试搜索中文。
-			for (var ti=0;ti<taglist.length;ti++)
-			{ //循环搜索列表中是否已存在这个Tag
-				if (taglist[ti].value == this.value)
+			var tagC;
+
+			if (tagData) //如果有JSON数据，直接使用
+			{ //扩展版的JSON数据
+				var searchRes = tagData.filter(function(tag){ //搜索绝对等于的
+					return tag.search == _this.value;
+				});
+				if (searchRes.length<1)
+				{ //猜测式搜索
+					searchRes = tagData.filter(function(tag){
+						return tag.name.indexOf(_this.value)>=0 || tag.key.indexOf(_this.value)>=0; //有非tag字符时才搜索中文，其他时候搜索key
+					});
+					if (searchRes.length>0)
+					{
+						guess = true; //标记为猜的
+						_this.value = searchRes[0].search; //目前的输入修改为猜的tag
+					}
+				}
+				if (searchRes.length>0)
 				{
-					clabel = taglist[ti].label;
-					break;
-				}else if(useGuess && taglist[ti].label.indexOf(this.value)>0)
-				{
-					clabel = taglist[ti].label;
-					guess = true; //标记为猜的
-					this.value = taglist[ti].value; //目前的输入修改为猜的tag
-					break;
+					tagC = searchRes[0];
+					clabel = tagC.name;
+				}
+			}else
+			{ //脚本版的数据
+				if (_this.value.replace(/[\w\:\"\s\-\.\'\$]/,"").length>0) useGuess = true; //如果存在非tag字符，则尝试搜索中文。
+				for (var ti=0;ti<taglist.length;ti++)
+				{ //循环搜索列表中是否已存在这个Tag
+					if (taglist[ti].value == _this.value)
+					{
+						clabel = taglist[ti].label;
+						break;
+					}else if(useGuess && taglist[ti].label.indexOf(_this.value)>0)
+					{
+						clabel = taglist[ti].label;
+						guess = true; //标记为猜的
+						_this.value = taglist[ti].value; //目前的输入修改为猜的tag
+						break;
+					}
 				}
 			}
 			if (clabel)
 			{
-				var regArr = /^(\w+):"?([\w+\s\-\'\.]+)\$?"?$/ig.exec(this.value);
-				var shortTag = (regArr[1]=="misc"?"":(regArr[1].substr(0,1) + ":")) + regArr[2]; //缩减Tag长度，以便一次能多提交一些Tag
+				var shortTag;
+				if (tagData)
+				{ //扩展版的JSON数据
+					shortTag = (tagC.namespace=="misc"?"":(tagC.namespace.substr(0,1) + ":")) + tagC.key; //缩减Tag长度，以便一次能多提交一些Tag
+				}else
+				{ //脚本版的数据
+					var regArr = /^(\w+):"?([\w+\s\-\'\.]+)\$?"?$/ig.exec(_this.value);
+					shortTag = (regArr[1]=="misc"?"":(regArr[1].substr(0,1) + ":")) + regArr[2]; //缩减Tag长度，以便一次能多提交一些Tag
+				}
 				if ((newTagText.value+","+shortTag).length>200)
 				{
 					spnTagSearchInfo.innerHTML = "⛔超长（原始标签输入框限定200字符）";
-					aTagSearchInfo.removeAttribute("id");
+					if (!tagData) aTagSearchInfo.removeAttribute("id");
 					aTagSearchInfo.innerHTML = "";
 				}else
 				{
 					newTagText.value = (newTagText.value.length>0)?(newTagText.value+","+shortTag):shortTag;
-					spnTagSearchInfo.innerHTML = (guess?"程序猜测你想添加":"你添加了")+" " + (tagData?"":(clabel.split(":")[0] + "："));
-					aTagSearchInfo.id = "ta_" + (regArr[1]=="misc"?"":regArr[1]+":") + regArr[2].replace(/\s/igm,"_");
+					spnTagSearchInfo.innerHTML = (guess?"程序猜测你想添加":"你添加了")+" " + (tagData?nameSpaceC[tagC.namespace]:clabel.split(":")[0]) + "：";
+					if (!tagData) aTagSearchInfo.id = "ta_" + (regArr[1]=="misc"?"":regArr[1]+":") + regArr[2].replace(/\s/igm,"_");
 					aTagSearchInfo.innerHTML = clabel;
-					this.value = "";
+					_this.value = "";
 				}
 			}else
 			{
 				spnTagSearchInfo.innerHTML = "☹️数据库里没有这个标签";
-				aTagSearchInfo.removeAttribute("id");
+				if (!tagData) aTagSearchInfo.removeAttribute("id");
 				aTagSearchInfo.innerHTML = "";
 			}
 		}
