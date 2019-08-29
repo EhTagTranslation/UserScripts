@@ -6,7 +6,7 @@
 // @description:zh-CN	一键复制E绅士的缩略图，便于书写标签翻译项目的详细介绍。
 // @include     *://exhentai.org/g/*
 // @include     *://e-hentai.org/g/*
-// @version     2.1.2
+// @version     2.2.0
 // @grant       GM_setClipboard
 // @grant       GM_notification
 // @author      Mapaler <mapaler@163.com>
@@ -14,8 +14,9 @@
 // ==/UserScript==
 
 const thumbnailPattern = "https?://(\\d+\\.\\d+\\.\\d+\\.\\d+|ul\\.ehgt\\.org|ehgt\\.org|exhentai\\.org)(?:/t)?/(\\w+)/(\\w+)/(\\w+)\-(\\d+)\-(\\d+)\-(\\d+)\-(\\w+)_(l|250).jpg"; //缩略图地址正则匹配式
-var gdtlObj = function(){
-	this.dom=null;
+var gdtlObj = function(dom){
+	this.dom = dom || null;
+	this.img = this.dom?dom.querySelector("img"):null;
 	this.fullsrc="";
 	this.domain="";
 	this.path1="";
@@ -26,20 +27,11 @@ var gdtlObj = function(){
 	this.height="";
 	this.extension="";
 	this.size="";
+	if (this.img)
+	{
+		this.addImgFromSrc(this.img.src);
+	}
 }
-gdtlObj.prototype.addImgFrom_gdtlDom = function(dom)
-{
-	if (dom == undefined) dom = this.dom;
-	else this.dom = dom;
-	var img = dom.querySelector("img");
-	if (img == null) console.log(dom)
-	var addsrc = this.addImgFromSrc(img.src);
-
-	if (addsrc)
-		return true;
-	else
-		return false;
-};
 gdtlObj.prototype.addImgFromSrc = function(src)
 {
 	if (src == undefined) return false;
@@ -60,58 +52,58 @@ gdtlObj.prototype.addImgFromSrc = function(src)
 	}
 	return true;
 };
-gdtlObj.prototype.replaceImgSrcFrom_gdtlDom = function(dom,type)
-{
-	if (dom == undefined) dom = this.dom;
-	else this.dom = dom;
-	var img = dom.getElementsByTagName("img")[0];
-	img.src = this.getSrc(type);
-};
 gdtlObj.prototype.getSrc = function()
 {
 	var srcA = [];
 	srcA.push(location.protocol,"//ehgt.org/",this.path1,"/",this.path2,"/",this.hash1,"-",this.hash2,"-",this.width,"-",this.height,"-",this.extension,"_",this.size,".jpg");
 	return srcA.join("");
 };
-gdtlObj.prototype.addBtnList = function(dom)
+gdtlObj.prototype.addBtnList = function()
 {
-	if (dom == undefined) dom = this.dom;
-	function creat_li(caption,href,type){
+	var ul = this.dom.appendChild(document.createElement("ul"));
+	ul.className = "EWHT-ul";
+	ul.thumbSrc = this.getSrc();
+	function buildString(){
+		var href = ul.thumbSrc;
+		var outstr,typeName;
+		switch(this.value)
+		{
+			case "1":
+				outstr = "![图](" + href + ")";
+				typeName = "MD格式图片地址";
+				break;
+			case "2":
+				outstr = "![图](# \"" + href + "\")";
+				typeName = "R18 MD格式图片地址";
+				break;
+			case "3":
+				outstr = "![图](## \"" + href + "\")";
+				typeName = "R18G限制级 MD格式图片地址";
+				break;
+			default:
+				outstr = href;
+				typeName = "单纯地址";
+		}
+		GM_setClipboard(outstr);
+		GM_notification(outstr, //显示文本
+			"已复制到剪贴板 - " +　typeName, //标题
+			href //缩略图地址
+			);
+	}
+	function creat_li(caption,value){
 		var li = document.createElement("li");
 		li.className = "EWHT-li";
-		var btn = document.createElement("button");
+		var btn = li.appendChild(document.createElement("button"));
 		btn.className = "EWHT-btn";
 		btn.appendChild(document.createTextNode(caption));
-		btn.onclick = function(){
-			var str = href;
-			var typeName = "单纯地址";
-			if (caption == "图")
-			{
-				str = "![图](" + href + ")";
-				typeName = "MD格式图片地址";
-			}else if (caption == "隐")
-			{
-				str = "![图](# \"" + href + "\")";
-				typeName = "R18 MD格式图片地址";
-			}else if (caption == "限")
-			{
-				str = "![图](## \"" + href + "\")";
-				typeName = "R18G限制级 MD格式图片地址";
-			}
-			GM_setClipboard(str);
-			GM_notification(str,"已复制到剪贴板 - " +　typeName,href);
-		}
-		
-		li.appendChild(btn);
+		btn.value = value;
+		btn.onclick = buildString;
 		return li
 	}
-	var ul = document.createElement("ul");
-	ul.className = "EWHT-ul";
-	ul.appendChild(creat_li("纯",this.getSrc()));
-	ul.appendChild(creat_li("图",this.getSrc()));
-	ul.appendChild(creat_li("隐",this.getSrc()));
-	ul.appendChild(creat_li("限",this.getSrc()));
-	dom.appendChild(ul);
+	ul.appendChild(creat_li("纯",0));
+	ul.appendChild(creat_li("图",1));
+	ul.appendChild(creat_li("隐",2));
+	ul.appendChild(creat_li("限",3));
 };
 
 var style = document.head.appendChild(document.createElement("style"));
@@ -127,20 +119,6 @@ var styleTxt = `#gdt .gdtl{
 	top:15px;
 	left:-5px;
 }
-.itg .id1{
-	position:relative;
-}
-.itg .EWHT-ul{
-	top:33px;
-	right:-5px;
-}
-#i3{
-	position:relative;
-}
-#i3 .EWHT-ul{
-	top:-30px;
-	right:0px;
-}
 .EWHT-ul{
 	position:absolute;
 	list-style:none;
@@ -155,20 +133,18 @@ var styleTxt = `#gdt .gdtl{
 style.innerHTML = styleTxt;
 
 var gdt = document.querySelector("#gdt");
-var itg = document.querySelector(".itg");
 if (gdt) //画廊
 {
-	var gdtls = gdt.getElementsByClassName("gdtl");
+	var gdtls = gdt.querySelectorAll(".gdtl");
 	if (gdtls.length>0)
 	{
-		for (var gdi = 0,len= gdtls.length ; gdi <len; gdi++)
+		for (var gdi= 0; gdi<gdtls.length; gdi++)
 		{
-			var gdtl_this = new gdtlObj;
-			var addRes = gdtl_this.addImgFrom_gdtlDom(gdtls[gdi]);
-			if (addRes) {
+			var gdtl_this = new gdtlObj(gdtls[gdi]);
+			if (gdtl_this.img) {
 				gdtl_this.addBtnList(gdtls[gdi]);
 			}
-			else console.debug("缩略图添加网址失败");
+			else console.debug("缩略图解析网址失败");
 		}
 	}
 	else
@@ -176,27 +152,7 @@ if (gdt) //画廊
 		console.debug("小图模式，本脚本不起作用。");
 	}
 
-}
-else if (itg) //搜索列表
-{
-	var id1s = itg.getElementsByClassName("id1");
-	if (id1s.length>0)
-	{
-		for (var id1i = 0,len= id1s.length ; id1i <len; id1i++)
-		{
-			var id3s = id1s[id1i].querySelector(".id3");
-			var id3_this = new gdtlObj;
-			var addRes = id3_this.addImgFrom_gdtlDom(id3s);
-			if (addRes) id3_this.addBtnList(id1s[id1i]);
-			else console.debug("添加网址失败");
-		}
-	}
-	else
-	{
-		console.debug("找不到图象列表。");
-	}
-}
-else //都不是
+}else //都不是
 {
 	console.debug("本脚本在该页面上不运行");
 }
