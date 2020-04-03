@@ -3,14 +3,14 @@
 可将标签区域浮动和半透明，方便查阅底部图片的同时添加标签。  
 
 <!-- 配合[[E绅士翻译注射器(EhTagSyringe)|EhTagSyringe]]（v1.3.8以上）使用时，还可以搜索多个标签后一次性提交。   -->
-[安装脚本](https://sleazyfork.org/scripts/381766)
+[安装脚本](//sleazyfork.org/scripts/381766)
 
 默认情况下并不会浮动，点击浮动按钮即可开启浮动窗口  
 ![打开浮动](./images/OpenFloat.png)
 
 标题栏内的滑柄可以控制浮动窗体透明度。  
 ![预览](./images/Preview.png)
-### 以下功能需配合 [EhSyringe](https://github.com/EhTagTranslation/EhSyringe)扩展 或 [E绅士翻译注射器(EhTagSyringe)](https://sleazyfork.org/zh-CN/scripts/33136-ehtagsyringe)脚本 使用
+### 以下功能需配合 [EhSyringe](../../../../EhSyringe)扩展 或 [E绅士翻译注射器(EhTagSyringe)](//sleazyfork.org/zh-CN/scripts/33136-ehtagsyringe)脚本 使用
 原始的标签输入框一次只能搜索一个标签，每次都要等待新增标签提交成功后才能搜索下一个标签，比较花时间。  
 可以在本工具添加的搜索框内进行搜索添加到原始输入框，方便一次提交多个标签。
 1. 输入文字搜索标签，点击对应标签，会得到标签值  

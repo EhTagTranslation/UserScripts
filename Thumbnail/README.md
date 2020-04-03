@@ -3,7 +3,7 @@
 自动将 E 绅士大缩略图域名改为手机站域名，并可以一键复制各站点格式的缩略图。
 
 去到处找能在 E 站看的图还是很困难的一件工作，此脚本工具可以快速将E站作品缩略图复制为 Wiki 使用的格式。  
-[安装脚本](https://sleazyfork.org/scripts/31743)
+[安装脚本](//sleazyfork.org/scripts/31743)
 
 画廊内点击 `Large` 开启**大图模式**  
 ![打开大图模式](./images/OpenLargeThumbnail.png)
