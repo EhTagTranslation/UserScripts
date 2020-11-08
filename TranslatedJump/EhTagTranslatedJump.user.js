@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         eh漫画翻译快捷按钮
+// @name         eh漫画语言快捷按钮
 // @namespace    com.xioxin.translatedJump
-// @version      0.4
-// @description  快速跳转到其他漫画翻译版本
+// @version      0.5
+// @description  快速跳转到其他漫画语言版本
 // @author       xioxin
 // @include     *://exhentai.org/g/*
 // @include     *://e-hentai.org/g/*
@@ -101,7 +101,7 @@ GM_addStyle(`
 
 
 async function getDataList(name) {
-    let searchUrl = `${window.location.origin}/?f_search=${encodeURIComponent(name)}`;
+    let searchUrl = `${window.location.origin}/?f_search=${encodeURIComponent(`"${name}"`)}`;
     const response = await fetch(searchUrl);
     const html = await response.text();
     const safeHtml = html.replace(/^.*<body>(.*)<\/body>.*$/igms,"$1").replace(/<script.*?>(.*?)<\/script>/igms, '');
@@ -125,11 +125,23 @@ async function getDataList(name) {
     return dataList;
 }
 
+
+function cleanBookName(name) {
+    name = name.replace(/\[.*?\]/gi, '');
+    name = name.replace(/\(.*?\)/gi, '');
+    name = name.replace(/\sCh\.[0-9-]+/gi, '');
+    name = name.replace(/\s第[0-9-]+話/gi, '');
+    name = name.replace(/\s第[0-9-]+话/gi, '');
+    name = name.trim();
+    return name;
+}
+
 (async function() {
     const title1 = document.querySelector("#gn").textContent;
     const title2 = document.querySelector("#gj").textContent;
-    const cleanTitle1 = title1.replace(/\[.*?\]/gi, '').replace(/\(.*?\)/gi, '').trim();
-    const cleanTitle2 = title2.replace(/\[.*?\]/gi, '').replace(/\(.*?\)/gi, '').trim();
+    const cleanTitle1 = cleanBookName(title1);
+    const cleanTitle2 = cleanBookName(title2);
+    console.log("搜索相似:", cleanTitle1, '&', cleanTitle2);
     const dataList = [];
     const urlSet = new Set([window.location.origin + window.location.pathname]);
     if(cleanTitle1) {
@@ -204,7 +216,7 @@ async function getDataList(name) {
             <ul>
                 ${group.list.map(item => `
                 <li>
-                    <a href="${item.href}">${item.title}</a>
+                    <a href="${item.href}" target="_blank">${item.title}</a>
                     <span>${item.pages}</span> ${item.torrentHref ? `<a href="${item.torrentHref}" width=15 onclick="return popUp('${item.torrentHref}', 610, 590)" target="_blank"><img src="https://exhentai.org/img/t.png" alt="T" title="Show torrents"></a>` : ''}
                 </li>
                 `).join('')}
