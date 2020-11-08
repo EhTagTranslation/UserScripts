@@ -1,5 +1,8 @@
 漫画其他语言版本快捷跳转按钮
 =========
+
+[安装脚本](https://sleazyfork.org/zh-CN/scripts/415729);
+
 自动搜索通过标题搜索漫画的其他的语言版本,并分类展示在右上角.
 ![预览](./images/screenshot-01.png)
 
