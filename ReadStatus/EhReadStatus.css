@@ -1,0 +1,10 @@
+@-moz-document domain("e-hentai.org"), domain("exhentai.org") {
+.itg a .glink::before {
+    content: "●";
+    color: #1a9317;
+    padding-right: 4px;
+}
+.itg a:visited .glink::before {
+    color: #aaa;
+}
+}

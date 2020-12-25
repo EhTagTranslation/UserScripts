@@ -1,7 +1,7 @@
 详情页标签颜色
 =========
 
-[安装脚本](https://sleazyfork.org/zh-CN/scripts/415728);
+[安装脚本](//sleazyfork.org/scripts/415728);
 
 E站推出的"我的标签"功能非常好用,但是漫画详情页却不像列表一样显示自定义的标签颜色.
 
