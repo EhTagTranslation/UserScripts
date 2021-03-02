@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         eh漫画语言快捷按钮
 // @namespace    com.xioxin.translatedJump
-// @version      0.5
+// @version      0.6
 // @description  快速跳转到其他漫画语言版本
 // @author       xioxin
 // @include     *://exhentai.org/g/*
@@ -80,7 +80,7 @@ GM_addStyle(`
 }
 .tj-box .tj-lang-icon ul {
     display: none;
-    width: 300px;
+    white-space: nowrap;
     background: inherit;
     margin: 0;
     padding: 8px;
@@ -97,6 +97,18 @@ GM_addStyle(`
 .tj-box .tj-lang-icon ul li {
     padding: 2px 0;
 }
+.tj-box a {
+    text-decoration: none;
+}
+.tj-box ul a.title::before {
+    content: "●";
+    color: #1a9317;
+    padding-right: 4px;
+}
+.tj-box ul a.title:visited::before {
+    color: #aaa;
+}
+
 `);
 
 
@@ -115,6 +127,7 @@ async function getDataList(name) {
         const torrentElement = e.querySelector('.gldown a');
         const titleElement = e.querySelector('.glink');
         return {
+            distance: minDistance(cleanBookName(titleElement.textContent), name),
             href: linkElement.href,
             title: titleElement.textContent,
             pages: pagesElement ? pagesElement.textContent : null,
@@ -134,6 +147,31 @@ function cleanBookName(name) {
     name = name.replace(/\s第[0-9-]+话/gi, '');
     name = name.trim();
     return name;
+}
+
+function minDistance(s1, s2) {
+    const len1 = s1.length
+    const len2 = s2.length
+    let matrix = []
+    for (let i = 0; i <= len1; i++) {
+        matrix[i] = new Array()
+        for (let j = 0; j <= len2; j++) {
+            if (i == 0) {
+                matrix[i][j] = j
+            } else if (j == 0) {
+                matrix[i][j] = i
+            } else {
+                let cost = 0
+                if (s1[i - 1] != s2[j - 1]) {
+                    cost = 1
+                }
+                const temp = matrix[i - 1][j - 1] + cost
+
+                matrix[i][j] = Math.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, temp)
+            }
+        }
+    }
+    return matrix[len1][len2]
 }
 
 (async function() {
@@ -160,6 +198,8 @@ function cleanBookName(name) {
             }
         });
     }
+
+    dataList.sort((a,b) => a.distance - b.distance);
 
     dataList.forEach(v => {
         for(let lang of languages) {
@@ -216,7 +256,7 @@ function cleanBookName(name) {
             <ul>
                 ${group.list.map(item => `
                 <li>
-                    <a href="${item.href}" target="_blank">${item.title}</a>
+                    <a href="${item.href}" class="title" target="_blank">${item.title}</a>
                     <span>${item.pages}</span> ${item.torrentHref ? `<a href="${item.torrentHref}" width=15 onclick="return popUp('${item.torrentHref}', 610, 590)" target="_blank"><img src="https://exhentai.org/img/t.png" alt="T" title="Show torrents"></a>` : ''}
                 </li>
                 `).join('')}
