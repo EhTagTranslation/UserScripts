@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         eh详情页标签颜色
 // @namespace    com.xioxin.tag-color
-// @version      0.2
+// @version      0.3
 // @description  eh为详情页标签增加颜色,修改网页图标为标签颜色
 // @author       xioxin
 // @include     *://exhentai.org/g/*
@@ -51,21 +51,38 @@ function colorIcon() {
     if(!colors.length) return;
     const canvas = document.createElement('canvas');
     canvas.width = canvas.height = 128;
+    const edgeSize = 8;
     let ctx = canvas.getContext("2d");
     colors.forEach((c, i) => {
         ctx.fillStyle = ctx.strokeStyle = c;
-        ctx.fillRect(canvas.width / colors.length * i, 0, canvas.width / colors.length, canvas.height);
-    });
+        ctx.fillRect((canvas.width - edgeSize*2) / colors.length * i + edgeSize, 0, (canvas.width - edgeSize*2) / colors.length, canvas.height);
+        });
+        ctx.globalCompositeOperation="destination-in";
+        ctx.fillStyle = "rgb(0,0,0)";
+        ctx.roundRect(edgeSize/2,edgeSize/2,canvas.width - edgeSize,canvas.height - edgeSize, 20).fill();
+        ctx.globalCompositeOperation="source-over";
+        ctx.lineWidth = edgeSize;
+        ctx.strokeStyle = "#5C0D11";
+        ctx.stroke();
     const link = canvas.toDataURL('image/png');
-    let favicon = document.querySelector('link[rel="icon"]');
-    if (favicon !== null) {
-        favicon.href = link;
-    } else {
-        favicon = document.createElement("link");
-        favicon.rel = "icon";
-        favicon.href = link;
-        document.head.appendChild(favicon);
-    }
+    const favicon = document.createElement("link");
+    favicon.rel = "icon";
+    favicon.href = link;
+    document.head.appendChild(favicon);
+    return link;
+}
+
+CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+    if (w < 2 * r) r = w / 2;
+    if (h < 2 * r) r = h / 2;
+    this.beginPath();
+    this.moveTo(x+r, y);
+    this.arcTo(x+w, y, x+w, y+h, r);
+    this.arcTo(x+w, y+h, x, y+h, r);
+    this.arcTo(x, y+h, x, y, r);
+    this.arcTo(x, y, x+w, y, r);
+    this.closePath();
+    return this;
 }
 
 
