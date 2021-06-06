@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         eh详情页标签颜色
 // @namespace    com.xioxin.tag-color
-// @version      0.3
-// @description  eh为详情页标签增加颜色,修改网页图标为标签颜色
+// @version      0.4
+// @description  eh为详情页标签增加颜色
 // @author       xioxin
 // @include     *://exhentai.org/g/*
 // @include     *://e-hentai.org/g/*
@@ -27,6 +27,7 @@ async function saveMyTagData() {
 }
 
 async function dyeing() {
+    setTimeout(colorIcon, 0);
     const myTags = GM_getValue("myTags", []);
     let css = '';
     myTags.forEach(v => {
@@ -41,13 +42,15 @@ async function dyeing() {
         `
     });
     GM_addStyle(css);
-    setTimeout(colorIcon, 10);
 }
 
 function colorIcon() {
-    const tagColors = [...document.querySelectorAll("#taglist td>div")].map(e => (/(rgb\(.*?\))/ig.exec(getComputedStyle(e).backgroundImage)||[])[0]).filter(v => v);
-    const colors = tagColors;
-    colors.sort();
+    const myTags = GM_getValue("myTags", []);
+    const tagIds = [...document.querySelectorAll("#taglist td>div")].map(v => v.id.replace('td_', '').replaceAll('_', ' '));
+    const tags = tagIds.map(id => myTags.find(v => v.tag == id)).filter(v => v);
+    tags.sort((a, b) => parseInt(a.weight) - parseInt(b.weight));
+    const weight = tags.reduce((accumulator, tag) => accumulator + parseInt(tag.weight), 0);
+    const colors = tags.map(tag => (/(rgb\(.*?\))/ig.exec(tag.borderColor)||[])[0]).filter(v => v);
     if(!colors.length) return;
     const canvas = document.createElement('canvas');
     canvas.width = canvas.height = 128;
@@ -56,20 +59,31 @@ function colorIcon() {
     colors.forEach((c, i) => {
         ctx.fillStyle = ctx.strokeStyle = c;
         ctx.fillRect((canvas.width - edgeSize*2) / colors.length * i + edgeSize, 0, (canvas.width - edgeSize*2) / colors.length, canvas.height);
-        });
-        ctx.globalCompositeOperation="destination-in";
-        ctx.fillStyle = "rgb(0,0,0)";
-        ctx.roundRect(edgeSize/2,edgeSize/2,canvas.width - edgeSize,canvas.height - edgeSize, 20).fill();
-        ctx.globalCompositeOperation="source-over";
-        ctx.lineWidth = edgeSize;
-        ctx.strokeStyle = "#5C0D11";
-        ctx.stroke();
-    const link = canvas.toDataURL('image/png');
-    const favicon = document.createElement("link");
-    favicon.rel = "icon";
-    favicon.href = link;
-    document.head.appendChild(favicon);
-    return link;
+    });
+    ctx.globalCompositeOperation="destination-in";
+    ctx.fillStyle = "rgb(0,0,0)";
+    ctx.roundRect(edgeSize/2,edgeSize/2,canvas.width - edgeSize,canvas.height - edgeSize, 20).fill();
+    ctx.globalCompositeOperation="source-over";
+    ctx.lineWidth = edgeSize;
+    ctx.strokeStyle = "#5C0D11";
+    ctx.stroke();
+    ctx.font = '100px Consolas, Monaco, monospace';
+    const tw = ctx.measureText("w").width;
+    const fs = Math.min((( 100 / (tw * 3))) * canvas.width, canvas.width );
+    ctx.font = `${fs.toFixed(2)}px Consolas, Monaco, monospace`;
+    ctx.fillStyle = "#5C0D11";
+    ctx.strokeStyle = "#FFF";
+    const t = `${weight}`;
+    const tl = t.length > 2 ? edgeSize : edgeSize * 2;
+    ctx.strokeText(`${weight}`,tl, fs);
+    ctx.fillText(`${weight}`, tl, fs);
+    canvas.toBlob(function(blob) {
+        const link = canvas.toDataURL('image/png');
+        const favicon = document.createElement("link");
+        favicon.rel = "icon";
+        favicon.href = URL.createObjectURL(blob);
+        document.head.appendChild(favicon);
+    });
 }
 
 CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
