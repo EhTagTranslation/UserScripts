@@ -22,6 +22,7 @@ div.gi
 	top: unset !important;
 	position: relative;
 	display: inline-block;
+	float: unset;
 }
 #t{
 	height: unset !important;

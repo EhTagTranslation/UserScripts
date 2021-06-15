@@ -10,8 +10,8 @@
 // @include     *://e-hentai.org/lofi/g/*
 // @include     *://upload.e-hentai.org/managegallery*
 // @include     *://exhentai.org/upload/managegallery*
-// @resource	ui-style https://github.com/EhTagTranslation/UserScripts/raw/master/Thumbnail/ETTHelper-Thumbnail.ui.css?v=3.0.2
-// @version     3.0.2
+// @resource	ui-style https://github.com/EhTagTranslation/UserScripts/raw/master/Thumbnail/ETTHelper-Thumbnail.ui.css?v=3.0.3
+// @version     3.0.3
 // @grant		GM_getResourceText
 // @grant		GM_addStyle
 // @grant       GM_setClipboard
