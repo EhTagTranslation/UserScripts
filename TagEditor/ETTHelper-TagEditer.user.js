@@ -6,7 +6,7 @@
 // @description:zh-CN	辅助编辑E绅士画廊的标签
 // @include     *://exhentai.org/g/*
 // @include     *://e-hentai.org/g/*
-// @version     1.4.5
+// @version     1.4.6
 // @author      Mapaler <mapaler@163.com>
 // @copyright	2019+, Mapaler <mapaler@163.com>
 // @grant       GM_registerMenuCommand
@@ -15,40 +15,40 @@
 // @grant       GM_deleteValue
 // ==/UserScript==
 
-var lang = (navigator.language||navigator.userLanguage).replace("-","_"); //获取浏览器语言
-var scriptVersion = "unknown"; //本程序的版本
-var scriptName = "ETTWikiHelper-TagEditer"; //本程序的名称
-if (typeof(GM_info)!="undefined")
-{
-	scriptVersion = GM_info.script.version.replace(/(^\s*)|(\s*$)/g, "");
-	if (GM_info.script.name_i18n)
+const scriptVersion = (defaultVersion=>typeof GM_info != "undefined" ? GM_info.script.version.replace(/(^\s*)|(\s*$)/g, "") : defaultVersion)("unknown"); //本程序的版本
+const scriptName = (defaultName=>{
+	if (typeof(GM_info)!="undefined")
 	{
-		var i18n = (navigator.language||navigator.userLanguage).replace("-","_"); //获取浏览器语言
-		scriptName = GM_info.script.name_i18n[i18n]; //支持Tampermonkey
-	}
-	else
+		if (GM_info.script.name_i18n)
+		{
+			const i18n = navigator.language.replace("-","_"); //获取浏览器语言
+			return GM_info.script.name_i18n[i18n]; //支持Tampermonkey
+		}
+		else
+		{
+			return GM_info.script.localizedName || //支持Greasemonkey 油猴子 3.x
+						GM_info.script.name; //支持Violentmonkey 暴力猴
+		}
+	}else
 	{
-		scriptName = GM_info.script.localizedName || //支持Greasemonkey 油猴子 3.x
-					GM_info.script.name; //支持Violentmonkey 暴力猴
+		return defaultName;
 	}
-}
+})("ETTWikiHelper-TagEditer"); //本程序的名称
 
 //限定数值最大最小值
 function limitMaxAndMin(num,max,min)
 {
-	if (num>max) return max;
-	else if (num< min) return min;
-	else return num;
+	return Math.max(Math.min(num, max), min);
 }
 
 //默认CSS内容
-var ewh_tag_styleText_Default = `
+const ewh_tag_styleText_Default = `
 /* fallback */
 @font-face {
   font-family: 'Material Icons';
   font-style: normal;
   font-weight: 400;
-  src: url(https://fonts.gstatic.com/s/materialicons/v47/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
+  src: url(https://fonts.gstatic.com/s/materialicons/v90/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
 }
 
 .material-icons {
@@ -332,7 +332,7 @@ if (tagdatalist) //如果存在则生成标签搜索框
 	aTagSearchInfo.className="ewh-tagsearchlink";
 
 	iptTagSearch.onkeypress = function(e){
-		if(e.keyCode==13){ //回车，将内容附加到真实Tag框，并清空搜索框
+		if(e.key == "Enter"){ //回车，将内容附加到真实Tag框，并清空搜索框
 			var _this = this;
 			if (_this.value.length == 0)
 			{ //如果什么都没输入，相当于提交
