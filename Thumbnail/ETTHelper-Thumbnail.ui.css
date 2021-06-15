@@ -1,4 +1,3 @@
-@-moz-document domain("e-hentai.org"), domain("exhentai.org") {
 .EWHT-ul
 {
 	padding: 0;
@@ -29,5 +28,4 @@ div.gi
 }
 #t div[id^="cell_"]{
 	margin: 0;
-}
 }

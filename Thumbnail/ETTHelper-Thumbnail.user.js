@@ -10,8 +10,8 @@
 // @include     *://e-hentai.org/lofi/g/*
 // @include     *://upload.e-hentai.org/managegallery*
 // @include     *://exhentai.org/upload/managegallery*
-// @resource	ui-style https://github.com/EhTagTranslation/UserScripts/raw/master/Thumbnail/ETTHelper-Thumbnail.ui.css
-// @version     3.0.1
+// @resource	ui-style https://github.com/EhTagTranslation/UserScripts/raw/master/Thumbnail/ETTHelper-Thumbnail.ui.css?v=3.0.2
+// @version     3.0.2
 // @grant		GM_getResourceText
 // @grant		GM_addStyle
 // @grant       GM_setClipboard
@@ -20,7 +20,7 @@
 // @copyright	2017+, Mapaler <mapaler@163.com>
 // ==/UserScript==
 
-GM_addStyle(GM_getResourceText("pubd-style"));
+GM_addStyle(GM_getResourceText("ui-style"));
 let thumbs;
 if (/^\/g\//.test(location.pathname)) //图像画廊
 {
