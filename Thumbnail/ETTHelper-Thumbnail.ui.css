@@ -1,0 +1,33 @@
+@-moz-document domain("e-hentai.org"), domain("exhentai.org") {
+.EWHT-ul
+{
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+.EWHT-ul>li
+{
+	display: inline-block;
+	margin-right: 3px;
+}
+.EWHT-ul>li:last-of-type
+{
+	margin-right: 0;
+}
+div[id^="cell_"],
+div.gdtl,
+div.gi
+{
+	height: unset !important;
+	left: unset !important;
+	top: unset !important;
+	position: relative;
+	display: inline-block;
+}
+#t{
+	height: unset !important;
+}
+#t div[id^="cell_"]{
+	margin: 0;
+}
+}
