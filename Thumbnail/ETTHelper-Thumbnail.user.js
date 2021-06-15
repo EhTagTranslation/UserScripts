@@ -1,7 +1,8 @@
 // ==UserScript==
 // @name        ETTHelper-Thumbnail
 // @name:zh-CN	E绅士标签翻译辅助工具-缩略图
-// @namespace   http://www.mapaler.com/
+// @namespace   EhTagTranslation
+// @homepage	https://github.com/EhTagTranslation/UserScripts
 // @description Help to get thumbnail for write EhTagTranslation's translation detail.
 // @description:zh-CN	一键复制E绅士的缩略图，便于书写标签翻译项目的详细介绍。
 // @include     *://exhentai.org/g/*
@@ -10,7 +11,8 @@
 // @include     *://upload.e-hentai.org/managegallery*
 // @include     *://exhentai.org/upload/managegallery*
 // @resource	ui-style https://github.com/EhTagTranslation/UserScripts/raw/master/Thumbnail/ETTHelper-Thumbnail.ui.css
-// @version     3.0.0
+// @version     3.0.1
+// @grant		GM_getResourceText
 // @grant		GM_addStyle
 // @grant       GM_setClipboard
 // @grant       GM_notification
