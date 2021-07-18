@@ -257,7 +257,7 @@ function minDistance(s1, s2) {
                 ${group.list.map(item => `
                 <li>
                     <a href="${item.href}" class="title" target="_blank">${item.title}</a>
-                    <span>${item.pages}</span> ${item.torrentHref ? `<a href="${item.torrentHref}" width=15 onclick="return popUp('${item.torrentHref}', 610, 590)" target="_blank"><img src="https://exhentai.org/img/t.png" alt="T" title="Show torrents"></a>` : ''}
+                    <span>${item.pages}</span> ${item.torrentHref ? `<a href="${item.torrentHref}" width=15 onclick="return popUp('${item.torrentHref}', 610, 590)" target="_blank"><img src="https://ehgt.org/g/t.png" alt="T" title="Show torrents"></a>` : ''}
                 </li>
                 `).join('')}
             </ul>
