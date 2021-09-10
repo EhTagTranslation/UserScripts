@@ -1,9 +1,13 @@
 EhAria2下载助手
 -------------------------------------
 
+[安装脚本](https://sleazyfork.org/zh-CN/scripts/432210-eharia2%E4%B8%8B%E8%BD%BD%E5%8A%A9%E6%89%8B)
+
 * 增加Aria2快捷下载按钮
 * 在页面中直接查看Aria2下载进度与状态
 * 一键下载功能 (存档下载, 注意会消耗配额或GP点数)
+
+
 
 ## 预览
 ![GIF 2021-9-10 下午 11-59-24](https://user-images.githubusercontent.com/5716100/132883089-d375791f-7865-4645-94ca-5a2f4dbe5327.gif)
