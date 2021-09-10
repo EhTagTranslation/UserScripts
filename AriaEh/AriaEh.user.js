@@ -530,10 +530,6 @@ class MonitorTask {
             if(agid) this.taskToGid[agid] = v;
             return agid;
         }).filter(v => v);
-        if(this.run) {
-            if(this.timerId) clearTimeout(this.timerId);
-            this.loadStatus();
-        }
     }
 
     async loadStatus() {
