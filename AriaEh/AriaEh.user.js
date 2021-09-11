@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EhAria2下载助手
 // @namespace    com.xioxin.AriaEh
-// @version      0.2
+// @version      0.3
 // @description  发送任务到Aria2,并查看下载进度
 // @author       xioxin
 // @include      *://exhentai.org/*
@@ -258,6 +258,7 @@ class AriaClientLite {
 
     _addUriParameter(url, dir = '') {
         const opt = {"follow-torrent": 'true'};
+        if(dir) opt['dir'] = dir;
         return this._jsonRpcPack('aria2.addUri', [ [url], opt ]);
     }
 
@@ -311,7 +312,7 @@ class SendTaskButton {
     async buttonClick() {
         this.showLoading();
         try {
-            const id = await ariaClient.addUri(this.link);
+            const id = await ariaClient.addUri(this.link, ARIA2_DIR);
             Tool.setTaskId(this.gid, id);
             this.showMessage("成功");
         } catch (error) {
@@ -685,7 +686,7 @@ function oneClickButton(gid, pageLink, archiverLink) {
             ).then(v => v.text());
             const downloadLinkMatch = /"(http.*?\.hath.network\/archive.*?)"/i.exec(archiverHtml);
             const downloadLink = downloadLinkMatch[1] + '?start=1';
-            const taskId = await ariaClient.addUri(downloadLink);
+            const taskId = await ariaClient.addUri(downloadLink, ARIA2_DIR);
             Tool.setTaskId(gid, taskId);
             oneClick.innerHTML = "✔";
             setTimeout(() => {
