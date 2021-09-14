@@ -19,8 +19,5 @@
 ## [详情页标签颜色](./DetailPageTagColor/)
 为漫画详情页的标签增加颜色。
 
-## [详情页标签颜色](./DetailPageTagColor/)
-为漫画详情页的标签增加颜色。
-
 ## [EhAria2下载助手](./AriaEh)
 发送下载任务到Aria2，并在E站直接查看下载状态。还有一键下载存档功能。
