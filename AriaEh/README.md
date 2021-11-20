@@ -6,7 +6,7 @@ EhAria2下载助手
 * 增加Aria2快捷下载按钮
 * 在页面中直接查看Aria2下载进度与状态 (列表页面、详情页面、种子页面、存档下载页面)
 * 一键下载功能 (存档下载, 注意会消耗配额或GP点数)
-
+* 种子快捷查看,鼠标指向种子下载按钮列出所有种子,并标注出体积最大最新的种子. 方便下载.
 
 ## 预览
 
@@ -24,4 +24,7 @@ EhAria2下载助手
 ### 存档下载页面
 ![image](https://user-images.githubusercontent.com/5716100/132882324-2ea8e27d-1c1c-488a-bf38-d0b08657e0e0.png)
 
+### 种子快捷查看
 
+<img width="644" alt="3dc2b9b7c608841ef4a1db2dd336368" src="https://user-images.githubusercontent.com/5716100/142731836-04d2e1df-f98b-4a4b-aaa2-db859fbd1185.png">
+<img width="986" alt="b7e060ef6da4803371c21ff03b41066" src="https://user-images.githubusercontent.com/5716100/142731839-ef9d8042-4048-4ae2-bb88-dd87406571be.png">
