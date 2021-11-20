@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EhAria2下载助手
 // @namespace    com.xioxin.AriaEh
-// @version      0.3
+// @version      0.5
 // @description  发送任务到Aria2,并查看下载进度
 // @author       xioxin
 // @include      *://exhentai.org/*
@@ -12,6 +12,7 @@
 // @grant        GM_setValue
 // @grant        GM_addValueChangeListener
 // @grant        GM_removeValueChangeListener
+// @grant        GM_setClipboard
 // @connect      localhost
 // @connect      127.0.0.1
 // ==/UserScript==
@@ -47,6 +48,26 @@ const USE_HATH_ARCHIVE_TASK_STATUS = true;
 
 // 在种子下载页面展示下载进度
 const USE_TORRENT_TASK_STATUS = true;
+
+// 详情页种子下载弹窗显示
+const USE_TORRENT_POP_LIST = true;
+/**
+ * 分类 category
+ * 同人志   Doujinshi
+ * 漫画     Manga
+ * 画师CG   Artist CG
+ * 游戏CG   Game CG
+ * 西方     Western
+ * 无H      Non-H
+ * 图集     Image Set
+ * Cosplay
+ * 亚洲色情 Asian Porn
+ * 杂项     Misc
+ */
+
+
+
+
 
 // ↑↑↑↑↑↑↑ 用户参数配置区域 ↑↑↑↑↑↑↑
 
@@ -111,7 +132,8 @@ const ONE_CLICK_STYLE = `
 .aria2helper-one-click {
     width: 15px;
     height: 15px;
-    background: radial-gradient(#ffc36b,#c56a00);    border-radius: 15px;
+    background: radial-gradient(#ffc36b,#c56a00);
+    border-radius: 15px;
     border: 1px #666 solid;
     box-sizing: border-box;
     color: #ebeae9;
@@ -123,6 +145,17 @@ const ONE_CLICK_STYLE = `
 .aria2helper-one-click:hover {
     background: radial-gradient(#bf893b,#985200);
 }
+.aria2helper-one-click.bt {
+    background: radial-gradient(#a2d04f,#5fb213);
+}
+.aria2helper-one-click.bt:hover {
+    background: radial-gradient(#95cf2b,#427711);
+}
+.aria2helper-one-click i {
+    font-style: initial;
+    transform: scale(0.7);
+    margin-left: -1.5px;
+}
 .gldown {
     width: 35px !important;
     display: flex;
@@ -132,7 +165,6 @@ const ONE_CLICK_STYLE = `
 .gl3e>div:nth-child(6) {
     left: 45px;
 }
-
 .aria2helper-one-click svg circle {
     stroke: #fff !important;
     stroke-width: 15px !important;
@@ -149,7 +181,91 @@ const ONE_CLICK_STYLE = `
     vertical-align: -1.5px;
 }
 
-
+#gd5 .g2 {
+    position: relative;
+}
+#btList{
+    display: none;
+    background: #f00;
+    width: 90%;
+    position: absolute;
+    border-radius: 4px;
+    border: 1px;
+    z-index: 999;
+    padding: 8px 0;
+    font-size: 12px;
+    text-align: left;
+    background: rgba(${IS_EX ? '0,0,0': '255,255,255'}, 0.6);
+    border-radius: 4px;
+    font-weight: normal;
+    white-space: normal;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 30%);
+    backdrop-filter: saturate(180%) blur(20px);
+    font-size: 12px;
+    width: max-content;
+    margin-top: 8px;
+}
+.nowrap {
+    white-space:nowrap;
+}
+#gmid #btList {
+    right: 0;
+    margin-top: 16px;
+}
+.gldown #btList{
+    left: 0;
+}
+.gldown #btList table {
+    max-width: 60vw;
+}
+.btListShow #btList{
+    display: block;
+}
+#btList .bt-item {
+    padding: 4px 8px;
+}
+#btList .bt-name {
+    font-weight: bold;
+}
+#btList .quality {
+    font-weight: bold;
+}
+#btList td span {
+    display: inline-block;
+    padding: 2px 4px;
+    height: 16px;
+    line-height: 16px;
+}
+#btList td span.quality {
+    font-weight: bold;
+    border-radius: 4px;
+    background: ${IS_EX ? '#fff': '#5c0d12'};
+    color:  ${IS_EX ? '#000': '#fff'};
+}
+#btList table {
+    border-spacing:0;
+    border-collapse:collapse;
+    max-width: 80vw;
+}
+#btList tr th {
+    padding-bottom: 8px;
+    text-align: center;
+}
+#btList tr th span {
+    font-weight: 400;
+}
+#btList tr td {
+    padding: 2px 4px;
+}
+#btList tr:hover td {
+    background: rgba(${IS_EX ? '0,0,0': '255,255,255'}, 0.6);
+}
+#btList tr>td:first-of-type, #btList tr>th:first-of-type {
+    padding: 0 8px;
+}
+#btList tr>td:last-child, #btList tr>th:last-child {
+    padding-right: 8px;
+}
 `;
 
 const SVG_LOADING_ICON = `<svg style="margin: auto; display: block; shape-rendering: auto;" width="24px" height="24px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid">
@@ -432,6 +548,14 @@ class Tool {
         if(m) return parseInt(m[1], 10);
     }
 
+    static urlGetToken(url) {
+        let m;
+        m = /&t(oken)?=(\d+)/i.exec(url);
+        if(m) return m[2];
+        m = /\/g\/(\d+)\/(\w+)\//i.exec(url);
+        if(m) return m[2];
+    }
+
     static setTaskId(ehGid, ariaGid) {
         GM_setValue("task-" + ehGid, ariaGid);
     }
@@ -561,6 +685,9 @@ class MonitorTask {
 }
 
 const GID = Tool.urlGetGId(window.location.href);
+const TOKEN = Tool.urlGetToken(window.location.href);
+
+console.log({GID, TOKEN});
 
 const ariaClient = new AriaClientLite({rpc: ARIA2_RPC, secret: ARIA2_SECRET, id: ARIA2_CLIENT_ID});
 
@@ -611,6 +738,9 @@ const ariaClient = new AriaClientLite({rpc: ARIA2_RPC, secret: ARIA2_SECRET, id:
             const insertionPoint = document.querySelector('#torrentinfo p');
             if(insertionPoint) insertionPoint.parentElement.insertBefore(taskStatusUi.element, insertionPoint.nextElementSibling);
         }
+        if(IS_GALLERY_DETAIL_PAGE && USE_TORRENT_POP_LIST) {
+            torrentsPopDetail();
+        }
     } else if(USE_LIST_TASK_STATUS) {
         const trList = document.querySelectorAll(".itg tr, .itg .gl1t");
         if(trList && trList.length) {
@@ -626,13 +756,26 @@ const ariaClient = new AriaClientLite({rpc: ARIA2_RPC, secret: ARIA2_SECRET, id:
                 }
                 if(!(glname && a)) return;
                 const gid = Tool.urlGetGId(a.href);
+                const token = Tool.urlGetToken(a.href);
                 insertionPointMap[gid] = glname;
                 const statusUI = monitorTask.addGid(gid);
                 statusUI.element.style.textAlign = textAlign;
                 glname.appendChild(statusUI.element);
+
+                const listTypeDom = document.querySelector("#dms select > option[selected]");
+                const listType = listTypeDom ? listTypeDom.value : '';
+                if(listType == 't') return; // 暂时不支持缩略图模式,显示问题
+                const gldown = tr.querySelector(".gldown");
+                const torrentImg = gldown.querySelector('img');
+                const torrentImgSrc = torrentImg.attributes.getNamedItem('src').value
+                const hasTorrent = torrentImgSrc.includes("g/t.png");
+                if(USE_TORRENT_POP_LIST && hasTorrent) {
+                    torrentsPopDetail(gldown, gid, token, true, listType == 't');
+                }
             });
         }
     }
+
 
     monitorTask.start();
 
@@ -660,6 +803,7 @@ const ariaClient = new AriaClientLite({rpc: ARIA2_RPC, secret: ARIA2_SECRET, id:
     }
 
 })();
+
 
 function oneClickButton(gid, pageLink, archiverLink) {
     const oneClick = document.createElement('div');
@@ -699,4 +843,228 @@ function oneClickButton(gid, pageLink, archiverLink) {
         loading = false;
     }
     return oneClick;
+}
+
+
+async function getTorrentList(gid, token, lifeTime = 0) {
+    const html = await fetch(`${document.location.origin}/gallerytorrents.php?gid=${gid}&t=${token}`, {credentials: "include"}).then(v => v.text());
+    const safeHtml = html.replace(/^.*<body>(.*)<\/body>.*$/igms,"$1").replace(/<script.*?>(.*?)<\/script>/igms, '');
+    const dom = document.createElement('div')
+    dom.innerHTML = safeHtml;
+    const formList = [...dom.querySelectorAll("form")];
+    const list = formList.map((e, i) => {
+        const link = e.querySelector("table > tbody > tr:nth-child(3) > td > a");
+        if(!link) return null;
+        const posted = e.querySelector("table > tbody > tr:nth-child(1) > td:nth-child(1)");
+        const size = e.querySelector("table > tbody > tr:nth-child(1) > td:nth-child(2)");
+        const seeds = e.querySelector("table > tbody > tr:nth-child(1) > td:nth-child(4)");
+        const peers = e.querySelector("table > tbody > tr:nth-child(1) > td:nth-child(5)");
+        const downloads = e.querySelector("table > tbody > tr:nth-child(1) > td:nth-child(6)");
+        const uploader = e.querySelector("table > tbody > tr:nth-child(2) > td:nth-child(1)");
+        const getNumber = (text = '') => parseFloat((text.match(/[\d\.]+/) || [0])[0]);
+        const getValueText = (text = '') => (text.match(/:(.*)/) || ['',''])[1].trim();
+        const sizeText = getValueText(size.textContent);
+        const sizeNumber = getNumber(sizeText);
+        const unit = [sizeText.match(/[KMGT]B/) || ['']][0];
+        const magnification = {
+            "KB": 1024,
+            "MB": 1024 * 1024,
+            "GB": 1024 * 1024 * 1024,
+            "TB": 1024 * 1024 * 1024 * 1024,
+        }
+        if(!magnification[unit]) {
+            console.warn("未知单位: ", size);
+        }
+        let bytes = magnification[unit] ? sizeNumber * magnification[unit] : -1;
+        const time = new Date(getValueText(posted.textContent));
+        return {
+            index: i,
+            time: time,
+            readableTime: dateStr(time),
+            size: sizeText,
+            bytes: bytes,
+            seeds: getNumber(seeds.textContent), // 做种
+            peers: getNumber(peers.textContent), // 下载中
+            downloads: getNumber(downloads.textContent), // 完成
+            user: getValueText(uploader.textContent),
+            name: link.textContent,
+            link: link.getAttribute('href'),
+            achievements: new Set(),
+        }
+    }).filter(v => v);
+
+    let maxBytes = 0;
+    let maxTime = 0;
+    let maxSeeds = 0;
+    let maxPeers = 0;
+    let maxDownloads = 0;
+    list.forEach(v => {
+        maxBytes = Math.max(maxBytes, v.bytes);
+        maxTime = Math.max(maxTime, v.time.getTime());
+        maxSeeds = Math.max(maxSeeds, v.seeds);
+        maxPeers = Math.max(maxPeers, v.peers);
+        maxDownloads = Math.max(maxDownloads, v.downloads);
+    });
+    list.forEach(v => {
+        const time = v.time.getTime();
+        if(v.bytes == maxBytes) v.achievements.add("size");
+        if(time == maxTime) v.achievements.add("time");
+        if(v.seeds == maxSeeds) v.achievements.add("seeds");
+        if(v.peers == maxPeers) v.achievements.add("peers");
+        if(v.downloads == maxDownloads) v.achievements.add("downloads");
+        if(time < lifeTime) v.achievements.add("overdue");
+    });
+
+    list.sort((a,b) => {
+        return b.time.getTime() - a.time.getTime();
+    })
+
+    console.log('list', list);
+    return list;
+}
+
+
+
+function dateStr(date = new Date()){
+    const now = new Date().getTime();
+    const time = Math.floor((now - date.getTime())/1000);
+    if(time <= 60){
+        return '刚刚';
+    }else if(time<=60*60){
+        return Math.floor(time/60)+"分钟前";
+    }else if(time<=60*60*24){
+        return  Math.floor(time/60/60)+"小时前";
+    }else if(time<=60*60*24*7) {
+        return Math.floor(time/60/60/24) + "天前";
+    }else if(time<=60*60*24*7*4) {
+        return Math.floor(time/60/60/24/7) + "周前";
+    }else if(time<=60*60*24*365) {
+        return (date.getMonth()+1).toString().padStart(2, '0')+"月"+date.getDate().toString().padStart(2, '0')+"日"
+    }
+    return date.getFullYear()+'年';
+}
+
+async function torrentsPopDetail(btButtonBox, gid = GID, token = TOKEN, buttonLeft = false, twoLines = false) {
+    if(!btButtonBox) {
+        btButtonBox = document.querySelector('#gd5 .g2:nth-child(3)');
+    }
+    if(btButtonBox) {
+        boxA = btButtonBox.querySelector('a');
+        boxA.onmouseenter = async () => {
+            let btListBox = btButtonBox.querySelector('#btList');
+            btButtonBox.classList.add('btListShow');
+            if(!btListBox) {
+                btListBox = document.createElement("div");
+                btListBox.id = 'btList';
+                btButtonBox.appendChild(btListBox);
+                btListBox.innerHTML = SVG_LOADING_ICON;
+                try {
+                    const torents = await getTorrentList(gid, token);
+                    if(torents.length) {
+                        const achievement = (item, name) => item.achievements.has(name) ? 'quality' : '';
+                        let th = '';
+                        if(twoLines) {
+                            th = `
+                            <th>名称</th>
+                            <th>体积</th>
+                            <th>时间</th>
+                            <th><span title="正在做种 Seeds">📤</span></th>
+                            <th><span title="正在下载 Peers">📥</span></th>
+                            <th><span title="下载完成 Downloads">✔️</span></th>`;
+                        }else {
+                            th = `
+                            ${buttonLeft ? "<th></th><th></th>" : ""}
+                            <th>名称</th>
+                            <th>体积</th>
+                            <th>时间</th>
+                            <th><span title="正在做种 Seeds">📤</span></th>
+                            <th><span title="正在下载 Peers">📥</span></th>
+                            <th><span title="下载完成 Downloads">✔️</span></th>`;
+                        }
+
+
+                        btListBox.innerHTML = `<table>
+                        <tr>
+                        ${th}
+                        </tr>
+                        ${
+                            torents.map(item => {
+
+                                const button1 = `<td class="bt-button nowrap"><div data-link="${item.link}" data-gid="${gid}" class="aria2helper-one-click bt-download-button bt ">🡇</div></td>`;
+                                const button2 = `<td class="bt-button nowrap"><div data-link="${item.link}" data-gid="${gid}" class="aria2helper-one-click bt-copy-button icon bt ">✂</div></td>`;
+                                    const nameHtml = `<td class="bt-name"><a href="${item.link}">${item.name}</a></td>`;
+                                    const infoHtml = `<td class="bt-size nowrap"><span class="${achievement(item, 'size')}">${item.size}</span></td>
+                                    <td class="bt-time nowrap"><span title="${item.time.toLocaleString()}" class="${achievement(item, 'time')}">${item.readableTime}</span></td>
+                                    <td class="bt-seeds nowrap"><span class="${achievement(item, 'seeds')}">${item.seeds}</span></td>
+                                    <td class="bt-peers nowrap"><span class="${achievement(item, 'peers')}">${item.peers}</span></td>
+                                    <td class="bt-downloads nowrap"><span class="${achievement(item, 'downloads')}">${item.downloads}</span></td>`;
+                                    if(twoLines) {
+                                        return `
+                                <tr class="bt-item no-hover">
+                                    ${nameHtml}
+                                </tr>
+                                <tr class="bt-item">
+                                    ${button1 + button2}
+                                    ${infoHtml}
+                                </tr>
+                                `;
+                                    }
+                                return `
+                                <tr class="bt-item">
+                                    ${buttonLeft ? button1 + button2 : ''}
+                                    ${nameHtml}
+                                    ${infoHtml}
+                                    ${buttonLeft ? '' :  button2 + button1 }
+                                </tr>
+                                `
+                            }).join('')
+                        }</table>`;
+
+                        btListBox.onclick = async (event) => {
+                            if(event.target.classList.contains("bt-download-button")) {
+                                const link = event.target.dataset.link;
+                                const gid = parseInt(event.target.dataset.gid, 10);
+                                if(event.target.dataset.loading === true) return;
+                                event.target.innerHTML = SVG_LOADING_ICON;
+                                event.target.dataset.loading = true;
+                                try {
+                                    const taskId = await ariaClient.addUri(link, ARIA2_DIR);
+                                    Tool.setTaskId(gid, taskId);
+                                    event.target.innerHTML = "✔";
+                                    setTimeout(() => {
+                                        event.target.innerHTML = "🡇";
+                                    }, 2000);
+                                } catch (error) {
+                                    alert("一键下载失败:" + error.message);
+                                    event.target.innerHTML = "🡇";
+                                }
+                                event.target.dataset.loading = false;
+                            }
+                            if(event.target.classList.contains("bt-copy-button") || event.target.parentNode.contains("bt-copy-button")) {
+                                const link = event.target.dataset.link;
+                                let match = link.match(/get\/(\d+)\/([0-9a-f]{40})/i);
+                                if(!match) return;
+                                let btih = match[2];
+                                let trackerId = match[1];
+                                const magnet = `magnet:?xt=urn:btih:${btih}&tr=${encodeURIComponent(`http://ehtracker.org/${trackerId}/announce`)}`;
+                                GM_setClipboard(magnet);
+                                event.target.innerHTML = "✔";
+                                setTimeout(() => {
+                                    event.target.innerHTML = "✂";
+                                }, 2000);
+                            }
+
+                        }
+                    }else {
+                        btListBox.innerHTML = "没有可用种子"
+                    }
+                } catch (error) {
+                    btListBox.innerHTML = error.message;
+                }
+            }
+        }
+        btButtonBox.onmouseleave = () => {
+            btButtonBox.classList.remove('btListShow');
+        }
+    }
 }
