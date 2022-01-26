@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         eh详情页标签颜色
 // @namespace    com.xioxin.tag-color
-// @version      0.4
+// @version      0.5
 // @description  eh为详情页标签增加颜色
 // @author       xioxin
 // @include     *://exhentai.org/g/*
@@ -14,17 +14,46 @@
 // ==/UserScript==
 
 async function saveMyTagData() {
-    GM_setValue("myTags", [...document.querySelectorAll('#usertags_outer>div')].map(e => {
+    const msg = document.createElement('div');
+    msg.style.clear = 'both';
+    msg.style.textAlign = 'center';
+    msg.style.width = '100%';
+    document.querySelector('#tagset_outer').appendChild(msg);
+    const setMsg = (text) => msg.innerText = text;
+    try {
+        const tags = [];
+        for(let id of [...document.querySelectorAll("#tagset_outer select option")].map(v=> v.value)) {
+            setMsg(`[详情页标签颜色]正在加载 ${id}`);
+            tags.push(...await loadMyTagData(id));
+        }
+        // 从小到大排序,因为颜色渲染是css,靠后的权重更大.
+        tags.sort((a,b) => a.weight - b.weight);
+        GM_setValue("myTags", tags);
+        setMsg(`[详情页标签颜色] 已更新 共${tags.length}个`);
+    } catch (error) {
+        setMsg(`[详情页标签颜色] 错误: ${e.message}`);
+    }
+}
+
+
+async function loadMyTagData(tageset) {
+    const html = await fetch(`${document.location.origin}/mytags?tagset=${tageset || 1}`, {credentials: "include"}).then(v => v.text());
+    const safeHtml = html.replace(/^.*<body>(.*)<\/body>.*$/igms,"$1").replace(/<script.*?>(.*?)<\/script>/igms, '');
+    const dom = document.createElement('div');
+    dom.innerHTML = safeHtml;
+    const tags = [...dom.querySelectorAll('#usertags_outer>div')].map(e => {
         if(e.querySelector('.gt') == null) return
         return {
             tag: e.querySelector('.gt').title,
             background: e.querySelector('.gt').style.background,
             color: e.querySelector('.gt').style.color,
             borderColor: e.querySelector('.gt').style.borderColor,
-            weight: e.querySelector('[id^=tagweight]').value,
+            weight: parseInt(e.querySelector('[id^=tagweight]').value, 10),
         }
-    }).filter(v => v));
+    }).filter(v => v);
+    return tags;
 }
+
 
 async function dyeing() {
     setTimeout(colorIcon, 0);
