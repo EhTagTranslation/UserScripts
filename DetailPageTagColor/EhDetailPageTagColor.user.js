@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         eh详情页标签颜色
 // @namespace    com.xioxin.tag-color
-// @version      0.5
+// @version      0.6
 // @description  eh为详情页标签增加颜色
 // @author       xioxin
 // @include     *://exhentai.org/g/*
@@ -12,6 +12,23 @@
 // @grant    GM_getValue
 // @grant    GM_setValue
 // ==/UserScript==
+
+
+if(typeof GM_getValue == 'undefined') {
+    function GM_getValue(key, val) {return JSON.parse(localStorage.getItem(key)||'null') || val }
+}
+
+if(typeof GM_addStyle == 'undefined') {
+    function GM_addStyle(script){
+        var style = document.createElement("style");
+        style.type = "text/css";
+        style.innerHTML=script
+        document.getElementsByTagName("HEAD").item(0).appendChild(style); 
+    }
+}
+if(typeof GM_setValue == 'undefined') {
+    function GM_setValue(key, val) {localStorage.setItem(key, JSON.stringify(val))}
+}
 
 async function saveMyTagData() {
     const msg = document.createElement('div');
@@ -30,7 +47,7 @@ async function saveMyTagData() {
         tags.sort((a,b) => a.weight - b.weight);
         GM_setValue("myTags", tags);
         setMsg(`[详情页标签颜色] 已更新 共${tags.length}个`);
-    } catch (error) {
+    } catch (e) {
         setMsg(`[详情页标签颜色] 错误: ${e.message}`);
     }
 }
