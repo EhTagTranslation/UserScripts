@@ -1,23 +1,24 @@
 // ==UserScript==
 // @name        ETTHelper-Thumbnail
-// @name:zh-CN	E绅士标签翻译辅助工具-缩略图
+// @name:zh-CN  E绅士标签翻译辅助工具-缩略图
 // @namespace   EhTagTranslation
-// @homepage	https://github.com/EhTagTranslation/UserScripts
 // @description Help to get thumbnail for write EhTagTranslation's translation detail.
-// @description:zh-CN	一键复制E绅士的缩略图，便于书写标签翻译项目的详细介绍。
+// @description:zh-CN 一键复制E绅士的缩略图，便于书写标签翻译项目的详细介绍。
 // @include     *://exhentai.org/g/*
 // @include     *://e-hentai.org/g/*
 // @include     *://e-hentai.org/lofi/g/*
 // @include     *://upload.e-hentai.org/managegallery*
 // @include     *://exhentai.org/upload/managegallery*
-// @resource	ui-style https://github.com/EhTagTranslation/UserScripts/raw/master/Thumbnail/ETTHelper-Thumbnail.ui.css?v=3.0.3
+// @resource    ui-style https://github.com/EhTagTranslation/UserScripts/raw/master/Thumbnail/ETTHelper-Thumbnail.ui.css?v=3.0.3
 // @version     3.0.3
-// @grant		GM_getResourceText
-// @grant		GM_addStyle
+// @grant       GM_getResourceText
+// @grant       GM_addStyle
 // @grant       GM_setClipboard
 // @grant       GM_notification
 // @author      Mapaler <mapaler@163.com>
-// @copyright	2017+, Mapaler <mapaler@163.com>
+// @copyright   2017+, Mapaler <mapaler@163.com>
+// @homepage    https://github.com/EhTagTranslation/UserScripts
+// @supportURL  https://github.com/EhTagTranslation/UserScripts/issues
 // ==/UserScript==
 
 GM_addStyle(GM_getResourceText("ui-style"));

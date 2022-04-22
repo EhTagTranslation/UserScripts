@@ -4,6 +4,8 @@
 // @version      0.1
 // @description  利用css ":visited" 特性在标题前增加阅读状态指示
 // @author       xioxin
+// @homepage     https://github.com/EhTagTranslation/UserScripts
+// @supportURL   https://github.com/EhTagTranslation/UserScripts/issues
 // @include     *://exhentai.org/*
 // @include     *://e-hentai.org/*
 // @grant    GM_addStyle

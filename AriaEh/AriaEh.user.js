@@ -4,6 +4,8 @@
 // @version      0.5
 // @description  发送任务到Aria2,并查看下载进度
 // @author       xioxin
+// @homepage     https://github.com/EhTagTranslation/UserScripts
+// @supportURL   https://github.com/EhTagTranslation/UserScripts/issues
 // @include      *://exhentai.org/*
 // @include      *://e-hentai.org/*
 // @include      *hath.network/archive/*

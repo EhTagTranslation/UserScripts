@@ -1,15 +1,16 @@
 // ==UserScript==
 // @name        ETTHelper-TagEditer
-// @name:zh-CN	E绅士标签翻译辅助工具-标签编辑
+// @name:zh-CN  E绅士标签翻译辅助工具-标签编辑
 // @namespace   EhTagTranslation
-// @homepage	https://github.com/EhTagTranslation/UserScripts
 // @description Help to edit the gallery's tags.
-// @description:zh-CN	辅助编辑E绅士画廊的标签
+// @description:zh-CN 辅助编辑E绅士画廊的标签
 // @include     *://exhentai.org/g/*
 // @include     *://e-hentai.org/g/*
 // @version     1.4.6
 // @author      Mapaler <mapaler@163.com>
-// @copyright	2019+, Mapaler <mapaler@163.com>
+// @copyright   2019+, Mapaler <mapaler@163.com>
+// @homepage    https://github.com/EhTagTranslation/UserScripts
+// @supportURL  https://github.com/EhTagTranslation/UserScripts/issues
 // @grant       GM_registerMenuCommand
 // @grant       GM_getValue
 // @grant       GM_setValue

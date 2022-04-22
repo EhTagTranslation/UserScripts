@@ -4,6 +4,8 @@
 // @version      0.6
 // @description  快速跳转到其他漫画语言版本
 // @author       xioxin
+// @homepage     https://github.com/EhTagTranslation/UserScripts
+// @supportURL   https://github.com/EhTagTranslation/UserScripts/issues
 // @include     *://exhentai.org/g/*
 // @include     *://e-hentai.org/g/*
 // @grant    GM_addStyle

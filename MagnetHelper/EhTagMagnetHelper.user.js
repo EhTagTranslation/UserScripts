@@ -4,6 +4,8 @@
 // @version      0.1
 // @description  在种子列表直接复制磁力链
 // @author       xioxin
+// @homepage     https://github.com/EhTagTranslation/UserScripts
+// @supportURL   https://github.com/EhTagTranslation/UserScripts/issues
 // @include     *://exhentai.org/gallerytorrents.php*
 // @include     *://e-hentai.org/gallerytorrents.php*
 // @grant       GM_setClipboard

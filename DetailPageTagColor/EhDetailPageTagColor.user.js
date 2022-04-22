@@ -4,6 +4,8 @@
 // @version      0.6
 // @description  eh为详情页标签增加颜色
 // @author       xioxin
+// @homepage     https://github.com/EhTagTranslation/UserScripts
+// @supportURL   https://github.com/EhTagTranslation/UserScripts/issues
 // @include     *://exhentai.org/g/*
 // @include     *://e-hentai.org/g/*
 // @include     *://exhentai.org/mytags
