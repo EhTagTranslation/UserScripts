@@ -8,9 +8,11 @@
 // @include     *://e-hentai.org/g/*
 // @include     *://e-hentai.org/lofi/g/*
 // @include     *://upload.e-hentai.org/managegallery*
+// @include     *://upld.e-hentai.org/managegallery*
 // @include     *://exhentai.org/upload/managegallery*
+// @include     *://exhentai.org/upld/managegallery*
 // @resource    ui-style https://github.com/EhTagTranslation/UserScripts/raw/master/Thumbnail/ETTHelper-Thumbnail.ui.css?v=3.0.3
-// @version     3.0.3
+// @version     3.0.4
 // @grant       GM_getResourceText
 // @grant       GM_addStyle
 // @grant       GM_setClipboard
@@ -21,20 +23,35 @@
 // @supportURL  https://github.com/EhTagTranslation/UserScripts/issues
 // ==/UserScript==
 
-GM_addStyle(GM_getResourceText("ui-style"));
+let styleText = GM_getResourceText("ui-style");
 let thumbs;
 if (/^\/g\//.test(location.pathname)) //图像画廊
 {
-	thumbs = Array.from(document.querySelectorAll('#gdt .gdtl'));
+	thumbs = Array.from(document.querySelectorAll('#gdt>.gdtl'));
 }else if (/^\/lofi\//.test(location.pathname)) //手机版画廊
 {
-	thumbs = Array.from(document.querySelectorAll('#gh .gi'));
+	thumbs = Array.from(document.querySelectorAll('#gh>.gi'));
 }else if (/managegallery/.test(location.pathname)) //画廊编辑
 {
-	thumbs = Array.from(document.querySelectorAll('#t div[id^="cell_"]'));
+	thumbs = Array.from(document.querySelectorAll('#t>.nosel>div'));
 }
+const pageLink = thumbs[0]?.nodeName == 'A' ? thumbs[0] : thumbs[0]?.querySelector('a');
+if (pageLink) {
+	const match = pageLink.pathname.match(/\-(\d+)$/);
+	const firstPage = parseInt(match[1],10);
+	styleText += `
+body{
+	counter-reset: page ${firstPage-1};
+}
+.EWHT-ul::before{
+	counter-increment: page;
+	content: "P" counter(page) ": ";
+}
+`;
+}
+GM_addStyle(styleText);
+
 thumbs.forEach(thumb=>{
-	//thumb.style.height = null;
 	thumb.appendChild(buildBtnList());
 });
 
@@ -57,7 +74,7 @@ function getImgId(src)
 	}
 }
 function copyString(){
-	const type = parseInt(this.value);
+	const type = parseInt(this.value, 10);
 	const src_original = this.parentNode.parentNode.parentNode.querySelector('img').src;
 	const fileId = getImgId(src_original);
 	if (fileId == null)
