@@ -1084,7 +1084,7 @@ function getTorrentLink(link) {
     if(USE_MAGNET) {
         return torrentLink2magnet(link) || link;
     }
-    if(link.contains('exhentai.org') && REPLACE_EX_TORRENT_URL) {
+    if(link.includes('exhentai.org') && REPLACE_EX_TORRENT_URL) {
         return torrentLinkForceEhTracker(link) || link;
     }
     return link;
