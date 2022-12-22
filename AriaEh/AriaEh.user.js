@@ -1044,16 +1044,14 @@ async function torrentsPopDetail(btButtonBox, gid = GID, token = TOKEN, buttonLe
                             }
                             if(event.target.classList.contains("bt-copy-button") || event.target.parentNode.contains("bt-copy-button")) {
                                 const link = event.target.dataset.link;
-                                let match = link.match(/\/(\d+)\/([0-9a-f]{40})/i);
-                                if(!match) return;
-                                let btih = match[2];
-                                let trackerId = match[1];
-                                const magnet = `magnet:?xt=urn:btih:${btih}&tr=${encodeURIComponent(`http://ehtracker.org/${trackerId}/announce`)}`;
-                                GM_setClipboard(magnet);
-                                event.target.innerHTML = "✔";
-                                setTimeout(() => {
-                                    event.target.innerHTML = "✂";
-                                }, 2000);
+                                const magnet = torrentLink2magnet(link);
+                                if (magnet) {
+                                    GM_setClipboard(magnet);
+                                    event.target.innerHTML = "✔";
+                                    setTimeout(() => {
+                                        event.target.innerHTML = "✂";
+                                    }, 2000);
+                                }
                             }
 
                         }
