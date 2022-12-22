@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EhAria2下载助手
 // @namespace    com.xioxin.AriaEh
-// @version      0.5
+// @version      0.6
 // @description  发送任务到Aria2,并查看下载进度
 // @author       xioxin
 // @homepage     https://github.com/EhTagTranslation/UserScripts
