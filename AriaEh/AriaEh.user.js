@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EhAria2下载助手
 // @namespace    com.xioxin.AriaEh
-// @version      0.5
+// @version      0.6
 // @description  发送任务到Aria2,并查看下载进度
 // @author       xioxin
 // @homepage     https://github.com/EhTagTranslation/UserScripts
@@ -53,22 +53,12 @@ const USE_TORRENT_TASK_STATUS = true;
 
 // 详情页种子下载弹窗显示
 const USE_TORRENT_POP_LIST = true;
-/**
- * 分类 category
- * 同人志   Doujinshi
- * 漫画     Manga
- * 画师CG   Artist CG
- * 游戏CG   Game CG
- * 西方     Western
- * 无H      Non-H
- * 图集     Image Set
- * Cosplay
- * 亚洲色情 Asian Porn
- * 杂项     Misc
- */
 
+// 替换里站种子链接的域名，强制使用 ehtracker.org 域名。
+const REPLACE_EX_TORRENT_URL = true;
 
-
+// 使用磁力链替代种子链接，先将种子转换为磁力链，再发送给Aria2；
+const USE_MAGNET = false;
 
 
 // ↑↑↑↑↑↑↑ 用户参数配置区域 ↑↑↑↑↑↑↑
@@ -430,7 +420,7 @@ class SendTaskButton {
     async buttonClick() {
         this.showLoading();
         try {
-            const id = await ariaClient.addUri(torrentLink2magnet(this.link), ARIA2_DIR);
+            const id = await ariaClient.addUri(getTorrentLink(this.link), ARIA2_DIR);
             Tool.setTaskId(this.gid, id);
             this.showMessage("成功");
         } catch (error) {
@@ -1030,7 +1020,7 @@ async function torrentsPopDetail(btButtonBox, gid = GID, token = TOKEN, buttonLe
                                 event.target.innerHTML = SVG_LOADING_ICON;
                                 event.target.dataset.loading = true;
                                 try {
-                                    const taskId = await ariaClient.addUri(torrentLink2magnet(link), ARIA2_DIR);
+                                    const taskId = await ariaClient.addUri(getTorrentLink(link), ARIA2_DIR);
                                     Tool.setTaskId(gid, taskId);
                                     event.target.innerHTML = "✔";
                                     setTimeout(() => {
@@ -1069,10 +1059,33 @@ async function torrentsPopDetail(btButtonBox, gid = GID, token = TOKEN, buttonLe
     }
 }
 
-function torrentLink2magnet (link) {
+function getTorrentInfo(link) {
     let match = link.match(/\/(\d+)\/([0-9a-f]{40})/i);
     if(!match) return;
-    let btih = match[2];
-    let trackerId = match[1];
-    return `magnet:?xt=urn:btih:${btih}&tr=${encodeURIComponent(`http://ehtracker.org/${trackerId}/announce`)}`;                              
+    return {
+        hash: match[2],
+        trackerId: match[1],
+    }
+}
+
+function torrentLink2magnet (link) {
+    const info = getTorrentInfo(link);
+    if(!info) return;
+    return `magnet:?xt=urn:btih:${info.hash}&tr=${encodeURIComponent(`http://ehtracker.org/${info.trackerId}/announce`)}`;                              
+}
+
+function torrentLinkForceEhTracker (link) {
+    const info = getTorrentInfo(link);
+    if(!info) return;
+    return `https://ehtracker.org/get/${info.trackerId}/${info.hash}.torrent`;                              
+}
+
+function getTorrentLink(link) {
+    if(USE_MAGNET) {
+        return torrentLink2magnet(link) || link;
+    }
+    if(link.includes('exhentai.org') && REPLACE_EX_TORRENT_URL) {
+        return torrentLinkForceEhTracker(link) || link;
+    }
+    return link;
 }
