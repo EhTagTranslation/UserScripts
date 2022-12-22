@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         EhAria2下载助手
 // @namespace    com.xioxin.AriaEh
-// @version      0.6
+// @version      1.0
 // @description  发送任务到Aria2,并查看下载进度
-// @author       xioxin
+// @author       xioxin, SchneeHertz
 // @homepage     https://github.com/EhTagTranslation/UserScripts
 // @supportURL   https://github.com/EhTagTranslation/UserScripts/issues
 // @include      *://exhentai.org/*
@@ -21,19 +21,20 @@
 // @connect      127.0.0.1
 // ==/UserScript==
 
-// ↓↓↓↓↓↓↓ 用户参数配置区域 ↓↓↓↓↓↓↓
 
-// 如果你的下载服务器不是本机,需要的将域名添加到: 设置 - XHR 安全 - 用户域名白名单
+const IS_EX = window.location.host.includes("exhentai");
 
 GM_config.init({
-    'id': 'AriaEhSetting', // The id used for this instance of GM_config
+    'id': 'AriaEhSetting',
     'title': 'AriaEh设置',
     'fields': {
         'ARIA2_RPC': {
-            'label': 'ARIA2_RPC地址', // Appears next to field
-            'title': 'ARIA2_RPC地址',
-            'type': 'text', // Makes this setting a text field
-            'default': 'http://127.0.0.1:6800/jsonrpc' // Default value if user doesn't change it
+            'section': [ 'ARIA2配置', '如果你的下载服务器不是本机,需要的将域名添加到: <br>设置 - XHR 安全 - 用户域名白名单'],
+            'label': 'ARIA2_RPC地址<b style="color: red">(必填)</b>',
+            'title': 'ARIA2_RPC地址, 例如: http://127.0.0.1:6800/jsonrpc',
+            'labelPos': 'left',
+            'type': 'text',
+            'default': ''
         },
         'ARIA2_SECRET': {
             'label': 'ARIA2_RPC密钥',
@@ -43,71 +44,96 @@ GM_config.init({
         },
         'ARIA2_DIR': {
             'label': '保存文件位置',
-            'title': '保存文件位置,留空将下载到默认位置,例如 /Downloads 或者 D:\Downloads',
+            'title': '例如 /Downloads 或者 D:\Downloads, 留空将下载到默认位置',
             'type': 'text',
             'default': ''
         },
+        'USE_ONE_CLICK_DOWNLOAD': {
+            'section': [ '一键下载存档', '该功能是将"存档下载"的连接发送给Aria2.在列表页面与详情页增加橙色下载按钮.<b style="color: #f60">注意该功能会产生下载费用!</b>'],
+            'labelPos': 'left',
+            'label': '启用',
+            'title': '在列表页与详情页增加存档一键下载按钮',
+            'type': 'checkbox',
+            'default': true
+        },
         'ONE_CLICK_DOWNLOAD_DLTYPE': {
             'label': '一键下载画质',
-            'title': '一键下载画质 原始档案:org 重采样档案:res',
-            'type': 'text',
-            'default': 'org'
-        },
-        'USE_ONE_CLICK_DOWNLOAD': {
-            'label': '在列表页与详情页增加档案增加一键下载',
-            'title': '在列表页与详情页增加档案增加一键下载',
-            'type': 'checkbox',
-            'default': true
-        },
-        'USE_LIST_TASK_STATUS': {
-            'label': '在搜索列表页展示下载进度',
-            'title': '在搜索列表页展示下载进度',
-            'type': 'checkbox',
-            'default': true
-        },
-        'USE_GALLERY_DETAIL_TASK_STATUS': {
-            'label': '在画廊详情页展示下载进度',
-            'title': '在画廊详情页展示下载进度',
-            'type': 'checkbox',
-            'default': true
-        },
-        'USE_HATH_ARCHIVE_TASK_STATUS': {
-            'label': '在档案下载页面展示下载进度',
-            'title': '在档案下载页面展示下载进度',
-            'type': 'checkbox',
-            'default': true
-        },
-        'USE_TORRENT_TASK_STATUS': {
-            'label': '在种子下载页面展示下载进度',
-            'title': '在种子下载页面展示下载进度',
-            'type': 'checkbox',
-            'default': true
+            'type': 'select',
+            'labelPos': 'left',
+            'options': ['org(原始档案)', 'res(重采样档案)'],
+            'default': 'org(原始档案)'
         },
         'USE_TORRENT_POP_LIST': {
-            'label': '详情页种子下载弹窗显示',
-            'title': '详情页种子下载弹窗显示',
+            'section': [ '种子下载快捷弹窗', '鼠标指向详情页的"种子下载",或者列表的绿色箭头.将显示种子列表浮窗.并高亮最大体积,最新更新.' ],
+            'labelPos': 'left',
+            'label': '启用',
+            'title': '使用种子下载快捷弹窗',
             'type': 'checkbox',
             'default': true
         },
         'REPLACE_EX_TORRENT_URL': {
-            'label': '替换里站种子链接的域名',
-            'title': '替换里站种子链接的域名，强制使用 ehtracker.org 域名',
+            'label': '里站使用表站种子连接',
+            'title': '替换里站种子域名为ehtracker.org',
             'type': 'checkbox',
             'default': true
         },
         'USE_MAGNET': {
             'label': '使用磁力链替代种子链接',
-            'title': '使用磁力链替代种子链接，先将种子转换为磁力链，再发送给Aria2',
+            'title': '先将种子转换为磁力链，再发送给Aria2',
             'type': 'checkbox',
             'default': false
+        },
+        'USE_LIST_TASK_STATUS': {
+            'section': [ '下载进度展示'],
+            'labelPos': 'left',
+            'label': '在搜索列表页',
+            'title': '在搜索列表页',
+            'type': 'checkbox',
+            'default': true
+        },
+        'USE_GALLERY_DETAIL_TASK_STATUS': {
+            'label': '在画廊详情页',
+            'title': '在画廊详情页',
+            'type': 'checkbox',
+            'default': true
+        },
+        'USE_HATH_ARCHIVE_TASK_STATUS': {
+            'label': '在存档下载页面',
+            'title': '在存档下载页面',
+            'type': 'checkbox',
+            'default': true
+        },
+        'USE_TORRENT_TASK_STATUS': {
+            'label': '在种子下载页面',
+            'title': '在种子下载页面',
+            'type': 'checkbox',
+            'default': true
+        },
+        'INITIALIZED': {
+            'type': 'hidden',
+            'default': false,
         }
     },
-    css: '#AriaEhSetting .config_header { margin-bottom: 8px; }'
+    css: `
+    #AriaEhSetting { background: #E3E0D1; }
+    #AriaEhSetting .config_header { margin-bottom: 8px; }
+    #AriaEhSetting .section_header { font-size: 12pt; }
+    #AriaEhSetting .section_header_holder { margin-top: 16pt; }
+    #AriaEhSetting input, #AriaEhSetting select { background:#E3E0D1; border: 2px solid #B5A4A4; border-radius: 3px; }
+    #AriaEhSetting .field_label { display: inline-block; min-width: 150px; text-align: right;}
+    ${IS_EX ? `
+    #AriaEhSetting { background:#4f535b; color: #FFF; }
+    #AriaEhSetting .section_header { border: 1px solid #000;  }
+    #AriaEhSetting .section_desc { background:#34353b; border: 1px solid #000; color: #CCC; }
+    #AriaEhSetting input, #AriaEhSetting select { background:#34353b; color: #FFF; border: 2px solid #8d8d8d; border-radius: 3px; }
+    #AriaEhSetting_resetLink { color: #FFF; }
+    `: ''}
+    `
 })
 
 const iframeCss = `
-    width: 360px;
-    height: 420px;
+    width: 400px;
+    height: 480px;
     border: 1px solid;
     border-radius: 4px;
     position: fixed;
@@ -119,10 +145,12 @@ GM_registerMenuCommand("设置", () => {
     AriaEhSetting.style = iframeCss
 })
 
-// ↑↑↑↑↑↑↑ 用户参数配置区域 ↑↑↑↑↑↑↑
-
-
-// 本地保存的配置
+// 如果没有配置地址, 在首页弹出配置页面
+if((!GM_config.get('ARIA2_RPC')) && window.location.pathname == '/') {
+    GM_config.open();
+    AriaEhSetting.style = iframeCss
+    throw new Error("未设置ARIA2_RPC地址");
+}
 
 let ARIA2_CLIENT_ID = GM_getValue('ARIA2_CLIENT_ID', '');
 if (!ARIA2_CLIENT_ID) {
@@ -130,7 +158,6 @@ if (!ARIA2_CLIENT_ID) {
     GM_setValue("ARIA2_CLIENT_ID", ARIA2_CLIENT_ID);
 }
 
-const IS_EX = window.location.host.includes("exhentai");
 const IS_TORRENT_PAGE = window.location.href.includes("gallerytorrents.php");
 const IS_HATH_ARCHIVE_PAGE = window.location.href.includes("hath.network/archive");
 const IS_GALLERY_DETAIL_PAGE = window.location.href.includes("/g/");
@@ -869,7 +896,7 @@ function oneClickButton(gid, pageLink, archiverLink) {
                 archiverLink = Tool.htmlDecodeByRegExp(archiverLinkMatch[1]).replace("--", "-");
             }
             let formData = new FormData();
-            formData.append("dltype", GM_config.get('ONE_CLICK_DOWNLOAD_DLTYPE'));
+            formData.append("dltype", GM_config.get('ONE_CLICK_DOWNLOAD_DLTYPE').slice(0, 3));
             formData.append("dlcheck","Download Original Archive");
             const archiverHtml = await fetch(
                 archiverLink,
