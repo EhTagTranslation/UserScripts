@@ -44,7 +44,7 @@ GM_config.init({
         },
         'ARIA2_DIR': {
             'label': '保存文件位置',
-            'title': '例如 /Downloads 或者 D:\Downloads, 留空将下载到默认位置',
+            'title': '例如 /Downloads 或者 D:\\Downloads, 留空将下载到默认位置',
             'type': 'text',
             'default': ''
         },
