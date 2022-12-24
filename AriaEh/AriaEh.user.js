@@ -1,14 +1,16 @@
 // ==UserScript==
 // @name         EhAria2下载助手
 // @namespace    com.xioxin.AriaEh
-// @version      0.6
+// @version      1.0
 // @description  发送任务到Aria2,并查看下载进度
-// @author       xioxin
+// @author       xioxin, SchneeHertz
 // @homepage     https://github.com/EhTagTranslation/UserScripts
 // @supportURL   https://github.com/EhTagTranslation/UserScripts/issues
 // @include      *://exhentai.org/*
 // @include      *://e-hentai.org/*
 // @include      *hath.network/archive/*
+// @require      https://openuserjs.org/src/libs/sizzle/GM_config.js
+// @grant        GM_registerMenuCommand
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -19,55 +21,136 @@
 // @connect      127.0.0.1
 // ==/UserScript==
 
-// ↓↓↓↓↓↓↓ 用户参数配置区域 ↓↓↓↓↓↓↓
 
-// 如果你的下载服务器不是本机,需要的将域名添加到: 设置 - XHR 安全 - 用户域名白名单
+const IS_EX = window.location.host.includes("exhentai");
 
-// ARIA2地址
-let ARIA2_RPC = "http://127.0.0.1:6800/jsonrpc";
+GM_config.init({
+    'id': 'AriaEhSetting',
+    'title': 'AriaEh设置',
+    'fields': {
+        'ARIA2_RPC': {
+            'section': [ 'ARIA2配置', '如果你的下载服务器不是本机,需要的将域名添加到: <br>设置 - XHR 安全 - 用户域名白名单'],
+            'label': 'ARIA2_RPC地址<b style="color: red">(必填)</b>',
+            'title': 'ARIA2_RPC地址, 例如: http://127.0.0.1:6800/jsonrpc',
+            'labelPos': 'left',
+            'type': 'text',
+            'default': ''
+        },
+        'ARIA2_SECRET': {
+            'label': 'ARIA2_RPC密钥',
+            'title': 'ARIA2_RPC密钥',
+            'type': 'text',
+            'default': ''
+        },
+        'ARIA2_DIR': {
+            'label': '保存文件位置',
+            'title': '例如 /Downloads 或者 D:\\Downloads, 留空将下载到默认位置',
+            'type': 'text',
+            'default': ''
+        },
+        'USE_ONE_CLICK_DOWNLOAD': {
+            'section': [ '一键下载存档', '该功能是将"存档下载"的连接发送给Aria2.在列表页面与详情页增加橙色下载按钮.<b style="color: #f60">注意该功能会产生下载费用!</b>'],
+            'labelPos': 'left',
+            'label': '启用',
+            'title': '在列表页与详情页增加存档一键下载按钮',
+            'type': 'checkbox',
+            'default': true
+        },
+        'ONE_CLICK_DOWNLOAD_DLTYPE': {
+            'label': '一键下载画质',
+            'type': 'select',
+            'labelPos': 'left',
+            'options': ['org(原始档案)', 'res(重采样档案)'],
+            'default': 'org(原始档案)'
+        },
+        'USE_TORRENT_POP_LIST': {
+            'section': [ '种子下载快捷弹窗', '鼠标指向详情页的"种子下载",或者列表的绿色箭头.将显示种子列表浮窗.并高亮最大体积,最新更新.' ],
+            'labelPos': 'left',
+            'label': '启用',
+            'title': '使用种子下载快捷弹窗',
+            'type': 'checkbox',
+            'default': true
+        },
+        'REPLACE_EX_TORRENT_URL': {
+            'label': '里站使用表站种子连接',
+            'title': '替换里站种子域名为ehtracker.org',
+            'type': 'checkbox',
+            'default': true
+        },
+        'USE_MAGNET': {
+            'label': '使用磁力链替代种子链接',
+            'title': '先将种子转换为磁力链，再发送给Aria2',
+            'type': 'checkbox',
+            'default': false
+        },
+        'USE_LIST_TASK_STATUS': {
+            'section': [ '下载进度展示'],
+            'labelPos': 'left',
+            'label': '在搜索列表页',
+            'title': '在搜索列表页',
+            'type': 'checkbox',
+            'default': true
+        },
+        'USE_GALLERY_DETAIL_TASK_STATUS': {
+            'label': '在画廊详情页',
+            'title': '在画廊详情页',
+            'type': 'checkbox',
+            'default': true
+        },
+        'USE_HATH_ARCHIVE_TASK_STATUS': {
+            'label': '在存档下载页面',
+            'title': '在存档下载页面',
+            'type': 'checkbox',
+            'default': true
+        },
+        'USE_TORRENT_TASK_STATUS': {
+            'label': '在种子下载页面',
+            'title': '在种子下载页面',
+            'type': 'checkbox',
+            'default': true
+        },
+        'INITIALIZED': {
+            'type': 'hidden',
+            'default': false,
+        }
+    },
+    css: `
+    #AriaEhSetting { background: #E3E0D1; }
+    #AriaEhSetting .config_header { margin-bottom: 8px; }
+    #AriaEhSetting .section_header { font-size: 12pt; }
+    #AriaEhSetting .section_header_holder { margin-top: 16pt; }
+    #AriaEhSetting input, #AriaEhSetting select { background:#E3E0D1; border: 2px solid #B5A4A4; border-radius: 3px; }
+    #AriaEhSetting .field_label { display: inline-block; min-width: 150px; text-align: right;}
+    ${IS_EX ? `
+    #AriaEhSetting { background:#4f535b; color: #FFF; }
+    #AriaEhSetting .section_header { border: 1px solid #000;  }
+    #AriaEhSetting .section_desc { background:#34353b; border: 1px solid #000; color: #CCC; }
+    #AriaEhSetting input, #AriaEhSetting select { background:#34353b; color: #FFF; border: 2px solid #8d8d8d; border-radius: 3px; }
+    #AriaEhSetting_resetLink { color: #FFF; }
+    `: ''}
+    `
+})
 
-// 密钥
-let ARIA2_SECRET = "";
+const iframeCss = `
+    width: 400px;
+    height: 480px;
+    border: 1px solid;
+    border-radius: 4px;
+    position: fixed;
+    z-index: 9999;
+`
 
-// 保存文件位置,留空将下载到默认位置,例如 /Downloads 或者 D:\Downloads
-let ARIA2_DIR = "";
+GM_registerMenuCommand("设置", () => {
+    GM_config.open()
+    AriaEhSetting.style = iframeCss
+})
 
-
-// 一键下载画质 原始档案:org 重采样档案:res
-const ONE_CLICK_DOWNLOAD_DLTYPE = "org";
-
-// 在列表页与详情页增加档案增加一键下载 (禁用请将true改为false)
-const USE_ONE_CLICK_DOWNLOAD = true;
-
-// 在搜索列表页展示下载进度
-const USE_LIST_TASK_STATUS = true;
-
-// 在画廊详情页展示下载进度
-const USE_GALLERY_DETAIL_TASK_STATUS = true;
-
-// 在档案下载页面展示下载进度
-const USE_HATH_ARCHIVE_TASK_STATUS = true;
-
-// 在种子下载页面展示下载进度
-const USE_TORRENT_TASK_STATUS = true;
-
-// 详情页种子下载弹窗显示
-const USE_TORRENT_POP_LIST = true;
-
-// 替换里站种子链接的域名，强制使用 ehtracker.org 域名。
-const REPLACE_EX_TORRENT_URL = true;
-
-// 使用磁力链替代种子链接，先将种子转换为磁力链，再发送给Aria2；
-const USE_MAGNET = false;
-
-
-// ↑↑↑↑↑↑↑ 用户参数配置区域 ↑↑↑↑↑↑↑
-
-
-// 本地保存的配置
-ARIA2_RPC = GM_getValue('ARIA2_RPC', ARIA2_RPC);
-ARIA2_SECRET = GM_getValue('ARIA2_SECRET', ARIA2_SECRET);
-ARIA2_DIR = GM_getValue('ARIA2_DIR', ARIA2_DIR);
+// 如果没有配置地址, 在首页弹出配置页面
+if((!GM_config.get('ARIA2_RPC')) && window.location.pathname == '/') {
+    GM_config.open();
+    AriaEhSetting.style = iframeCss
+    throw new Error("未设置ARIA2_RPC地址");
+}
 
 let ARIA2_CLIENT_ID = GM_getValue('ARIA2_CLIENT_ID', '');
 if (!ARIA2_CLIENT_ID) {
@@ -75,7 +158,6 @@ if (!ARIA2_CLIENT_ID) {
     GM_setValue("ARIA2_CLIENT_ID", ARIA2_CLIENT_ID);
 }
 
-const IS_EX = window.location.host.includes("exhentai");
 const IS_TORRENT_PAGE = window.location.href.includes("gallerytorrents.php");
 const IS_HATH_ARCHIVE_PAGE = window.location.href.includes("hath.network/archive");
 const IS_GALLERY_DETAIL_PAGE = window.location.href.includes("/g/");
@@ -420,7 +502,7 @@ class SendTaskButton {
     async buttonClick() {
         this.showLoading();
         try {
-            const id = await ariaClient.addUri(getTorrentLink(this.link), ARIA2_DIR);
+            const id = await ariaClient.addUri(getTorrentLink(this.link), GM_config.get('ARIA2_DIR'));
             Tool.setTaskId(this.gid, id);
             this.showMessage("成功");
         } catch (error) {
@@ -681,7 +763,7 @@ const TOKEN = Tool.urlGetToken(window.location.href);
 
 console.log({GID, TOKEN});
 
-const ariaClient = new AriaClientLite({rpc: ARIA2_RPC, secret: ARIA2_SECRET, id: ARIA2_CLIENT_ID});
+const ariaClient = new AriaClientLite({rpc: GM_config.get('ARIA2_RPC'), secret: GM_config.get('ARIA2_SECRET'), id: ARIA2_CLIENT_ID});
 
 (function() {
 
@@ -717,23 +799,23 @@ const ariaClient = new AriaClientLite({rpc: ARIA2_RPC, secret: ARIA2_SECRET, id:
 
         // 状态监听
         const taskStatusUi = monitorTask.addGid(GID);
-        if (IS_HATH_ARCHIVE_PAGE && USE_HATH_ARCHIVE_TASK_STATUS) {
+        if (IS_HATH_ARCHIVE_PAGE && GM_config.get('USE_HATH_ARCHIVE_TASK_STATUS')) {
             taskStatusUi.element.style.marginTop = '8px';
             const insertionPoint = document.querySelector('#db strong');
             if(insertionPoint) insertionPoint.parentElement.insertBefore(taskStatusUi.element, insertionPoint.nextElementSibling);
         }
-        if (IS_GALLERY_DETAIL_PAGE && USE_GALLERY_DETAIL_TASK_STATUS) {
+        if (IS_GALLERY_DETAIL_PAGE && GM_config.get('USE_GALLERY_DETAIL_TASK_STATUS')) {
             const insertionPoint = document.querySelector('#gd2');
             if(insertionPoint) insertionPoint.appendChild(taskStatusUi.element);
         }
-        if (IS_TORRENT_PAGE && USE_TORRENT_TASK_STATUS) {
+        if (IS_TORRENT_PAGE && GM_config.get('USE_TORRENT_TASK_STATUS')) {
             const insertionPoint = document.querySelector('#torrentinfo p');
             if(insertionPoint) insertionPoint.parentElement.insertBefore(taskStatusUi.element, insertionPoint.nextElementSibling);
         }
-        if(IS_GALLERY_DETAIL_PAGE && USE_TORRENT_POP_LIST) {
+        if(IS_GALLERY_DETAIL_PAGE && GM_config.get('USE_TORRENT_POP_LIST')) {
             torrentsPopDetail();
         }
-    } else if(USE_LIST_TASK_STATUS) {
+    } else if(GM_config.get('USE_LIST_TASK_STATUS')) {
         const trList = document.querySelectorAll(".itg tr, .itg .gl1t");
         if(trList && trList.length) {
             const insertionPointMap = {};
@@ -761,7 +843,7 @@ const ariaClient = new AriaClientLite({rpc: ARIA2_RPC, secret: ARIA2_SECRET, id:
                 const torrentImg = gldown.querySelector('img');
                 const torrentImgSrc = torrentImg.attributes.getNamedItem('src').value
                 const hasTorrent = torrentImgSrc.includes("g/t.png");
-                if(USE_TORRENT_POP_LIST && hasTorrent) {
+                if(GM_config.get('USE_TORRENT_POP_LIST') && hasTorrent) {
                     torrentsPopDetail(gldown, gid, token, true, listType == 't');
                 }
             });
@@ -771,7 +853,7 @@ const ariaClient = new AriaClientLite({rpc: ARIA2_RPC, secret: ARIA2_SECRET, id:
 
     monitorTask.start();
 
-    if(USE_ONE_CLICK_DOWNLOAD) {
+    if(GM_config.get('USE_ONE_CLICK_DOWNLOAD')) {
         Tool.addStyle(ONE_CLICK_STYLE);
         const trList = document.querySelectorAll(".itg tr, .itg .gl1t");
         if(trList && trList.length) {
@@ -814,7 +896,7 @@ function oneClickButton(gid, pageLink, archiverLink) {
                 archiverLink = Tool.htmlDecodeByRegExp(archiverLinkMatch[1]).replace("--", "-");
             }
             let formData = new FormData();
-            formData.append("dltype", ONE_CLICK_DOWNLOAD_DLTYPE);
+            formData.append("dltype", GM_config.get('ONE_CLICK_DOWNLOAD_DLTYPE').slice(0, 3));
             formData.append("dlcheck","Download Original Archive");
             const archiverHtml = await fetch(
                 archiverLink,
@@ -822,7 +904,7 @@ function oneClickButton(gid, pageLink, archiverLink) {
             ).then(v => v.text());
             const downloadLinkMatch = /"(http.*?\.hath.network\/archive.*?)"/i.exec(archiverHtml);
             const downloadLink = downloadLinkMatch[1] + '?start=1';
-            const taskId = await ariaClient.addUri(downloadLink, ARIA2_DIR);
+            const taskId = await ariaClient.addUri(downloadLink, GM_config.get('ARIA2_DIR'));
             Tool.setTaskId(gid, taskId);
             oneClick.innerHTML = "✔";
             setTimeout(() => {
@@ -1020,7 +1102,7 @@ async function torrentsPopDetail(btButtonBox, gid = GID, token = TOKEN, buttonLe
                                 event.target.innerHTML = SVG_LOADING_ICON;
                                 event.target.dataset.loading = true;
                                 try {
-                                    const taskId = await ariaClient.addUri(getTorrentLink(link), ARIA2_DIR);
+                                    const taskId = await ariaClient.addUri(getTorrentLink(link), GM_config.get('ARIA2_DIR'));
                                     Tool.setTaskId(gid, taskId);
                                     event.target.innerHTML = "✔";
                                     setTimeout(() => {
@@ -1071,20 +1153,20 @@ function getTorrentInfo(link) {
 function torrentLink2magnet (link) {
     const info = getTorrentInfo(link);
     if(!info) return;
-    return `magnet:?xt=urn:btih:${info.hash}&tr=${encodeURIComponent(`http://ehtracker.org/${info.trackerId}/announce`)}`;                              
+    return `magnet:?xt=urn:btih:${info.hash}&tr=${encodeURIComponent(`http://ehtracker.org/${info.trackerId}/announce`)}`;
 }
 
 function torrentLinkForceEhTracker (link) {
     const info = getTorrentInfo(link);
     if(!info) return;
-    return `https://ehtracker.org/get/${info.trackerId}/${info.hash}.torrent`;                              
+    return `https://ehtracker.org/get/${info.trackerId}/${info.hash}.torrent`;
 }
 
 function getTorrentLink(link) {
-    if(USE_MAGNET) {
+    if(GM_config.get('USE_MAGNET')) {
         return torrentLink2magnet(link) || link;
     }
-    if(link.includes('exhentai.org') && REPLACE_EX_TORRENT_URL) {
+    if(link.includes('exhentai.org') && GM_config.get('REPLACE_EX_TORRENT_URL')) {
         return torrentLinkForceEhTracker(link) || link;
     }
     return link;
