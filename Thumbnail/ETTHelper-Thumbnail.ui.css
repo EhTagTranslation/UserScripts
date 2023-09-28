@@ -13,6 +13,9 @@
 {
 	margin-right: 0;
 }
+.EWHT-btn::before {
+	content: attr(data-type);
+}
 div[id^="cell_"],
 div.gdtl,
 div.gi
