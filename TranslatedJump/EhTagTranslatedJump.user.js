@@ -66,7 +66,7 @@ GM_addStyle(`
     position: absolute;
     top: -1px;
     right: -1px;
-    z-index: 99999999;
+    z-index: 10;
     background: inherit;
     border: inherit;
     padding: 0 8px;
