@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         eh漫画语言快捷按钮
 // @namespace    com.xioxin.translatedJump
-// @version      0.6
+// @version      0.7
 // @description  快速跳转到其他漫画语言版本
 // @author       xioxin
 // @homepage     https://github.com/EhTagTranslation/UserScripts
