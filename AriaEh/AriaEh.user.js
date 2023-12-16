@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EhAria2下载助手
 // @namespace    com.xioxin.AriaEh
-// @version      1.0
+// @version      1.1
 // @description  发送任务到Aria2,并查看下载进度
 // @author       xioxin, SchneeHertz
 // @homepage     https://github.com/EhTagTranslation/UserScripts
@@ -12,19 +12,20 @@
 // @require      https://openuserjs.org/src/libs/sizzle/GM_config.js
 // @grant        GM_registerMenuCommand
 // @grant        GM_xmlhttpRequest
-// @grant        GM_getValue
-// @grant        GM_setValue
 // @grant        GM_addValueChangeListener
 // @grant        GM_removeValueChangeListener
 // @grant        GM_setClipboard
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM.getValue
+// @grant        GM.setValue
 // @connect      localhost
 // @connect      127.0.0.1
 // ==/UserScript==
 
 
 const IS_EX = window.location.host.includes("exhentai");
-
-GM_config.init({
+const gmc = new GM_config({
     'id': 'AriaEhSetting',
     'title': 'AriaEh设置',
     'fields': {
@@ -114,6 +115,9 @@ GM_config.init({
             'default': false,
         }
     },
+    'events': {
+        'init': onConfigInit
+    },
     css: `
     #AriaEhSetting { background: #E3E0D1; }
     #AriaEhSetting .config_header { margin-bottom: 8px; }
@@ -130,6 +134,17 @@ GM_config.init({
     `: ''}
     `
 })
+console.log('gmc', gmc);
+
+function onConfigInit() {
+    // 如果没有配置地址, 在首页弹出配置页面
+    if((!gmc.get('ARIA2_RPC')) && window.location.pathname == '/') {
+        gmc.open();
+        AriaEhSetting.style = iframeCss
+        throw new Error("未设置ARIA2_RPC地址");
+    }
+    init()
+}
 
 const iframeCss = `
     width: 400px;
@@ -141,16 +156,10 @@ const iframeCss = `
 `
 
 GM_registerMenuCommand("设置", () => {
-    GM_config.open()
+    gmc.open()
     AriaEhSetting.style = iframeCss
 })
 
-// 如果没有配置地址, 在首页弹出配置页面
-if((!GM_config.get('ARIA2_RPC')) && window.location.pathname == '/') {
-    GM_config.open();
-    AriaEhSetting.style = iframeCss
-    throw new Error("未设置ARIA2_RPC地址");
-}
 
 let ARIA2_CLIENT_ID = GM_getValue('ARIA2_CLIENT_ID', '');
 if (!ARIA2_CLIENT_ID) {
@@ -379,6 +388,7 @@ const ARIA2_ERROR_MSG = {
     '32': '文件校验失败.'
 };
 
+
 class AriaClientLite {
     constructor(opt = {}) {
         this.rpc = opt.rpc;
@@ -502,7 +512,7 @@ class SendTaskButton {
     async buttonClick() {
         this.showLoading();
         try {
-            const id = await ariaClient.addUri(getTorrentLink(this.link), GM_config.get('ARIA2_DIR'));
+            const id = await ariaClient.addUri(getTorrentLink(this.link), gmc.get('ARIA2_DIR'));
             Tool.setTaskId(this.gid, id);
             this.showMessage("成功");
         } catch (error) {
@@ -761,122 +771,9 @@ class MonitorTask {
 const GID = Tool.urlGetGId(window.location.href);
 const TOKEN = Tool.urlGetToken(window.location.href);
 
+let ariaClient;
+
 console.log({GID, TOKEN});
-
-const ariaClient = new AriaClientLite({rpc: GM_config.get('ARIA2_RPC'), secret: GM_config.get('ARIA2_SECRET'), id: ARIA2_CLIENT_ID});
-
-(function() {
-
-    Tool.addStyle(STYLE);
-
-    const monitorTask = new MonitorTask();
-    if(GID) {
-
-        // button
-        if(IS_TORRENT_PAGE) {
-            let tableList = document.querySelectorAll("#torrentinfo form table");
-            if(tableList && tableList.length){
-                tableList.forEach(function (table) {
-                    let insertionPoint = table.querySelector('input');
-                    if(!insertionPoint)return;
-                    let a = table.querySelector('a');
-                    if(!a) return;
-                    const link = a.href;
-                    const button = new SendTaskButton(GID, link);
-                    insertionPoint.parentNode.insertBefore(button.element, insertionPoint);
-                });
-            }
-        }
-
-        if (IS_HATH_ARCHIVE_PAGE) {
-            let insertionPoint = document.querySelector("#db a");
-            if(!insertionPoint)return;
-            const link = insertionPoint.href;
-            const button = new SendTaskButton(GID, link);
-            button.element.style.marginTop = '16px';
-            insertionPoint.parentNode.insertBefore(button.element, insertionPoint);
-        }
-
-        // 状态监听
-        const taskStatusUi = monitorTask.addGid(GID);
-        if (IS_HATH_ARCHIVE_PAGE && GM_config.get('USE_HATH_ARCHIVE_TASK_STATUS')) {
-            taskStatusUi.element.style.marginTop = '8px';
-            const insertionPoint = document.querySelector('#db strong');
-            if(insertionPoint) insertionPoint.parentElement.insertBefore(taskStatusUi.element, insertionPoint.nextElementSibling);
-        }
-        if (IS_GALLERY_DETAIL_PAGE && GM_config.get('USE_GALLERY_DETAIL_TASK_STATUS')) {
-            const insertionPoint = document.querySelector('#gd2');
-            if(insertionPoint) insertionPoint.appendChild(taskStatusUi.element);
-        }
-        if (IS_TORRENT_PAGE && GM_config.get('USE_TORRENT_TASK_STATUS')) {
-            const insertionPoint = document.querySelector('#torrentinfo p');
-            if(insertionPoint) insertionPoint.parentElement.insertBefore(taskStatusUi.element, insertionPoint.nextElementSibling);
-        }
-        if(IS_GALLERY_DETAIL_PAGE && GM_config.get('USE_TORRENT_POP_LIST')) {
-            torrentsPopDetail();
-        }
-    } else if(GM_config.get('USE_LIST_TASK_STATUS')) {
-        const trList = document.querySelectorAll(".itg tr, .itg .gl1t");
-        if(trList && trList.length) {
-            const insertionPointMap = {};
-            let textAlign = 'left';
-            trList.forEach(function (tr) {
-                let glname = tr.querySelector(".gl3e, .glname");
-                let a = tr.querySelector(".glname a, .gl1e a, .gl1t");
-                if(tr.classList.contains('gl1t')) {
-                    glname = tr;
-                    a = tr.querySelector('a');
-                    textAlign = 'center';
-                }
-                if(!(glname && a)) return;
-                const gid = Tool.urlGetGId(a.href);
-                const token = Tool.urlGetToken(a.href);
-                insertionPointMap[gid] = glname;
-                const statusUI = monitorTask.addGid(gid);
-                statusUI.element.style.textAlign = textAlign;
-                glname.appendChild(statusUI.element);
-
-                const listTypeDom = document.querySelector("#dms select > option[selected]");
-                const listType = listTypeDom ? listTypeDom.value : '';
-                if(listType == 't') return; // 暂时不支持缩略图模式,显示问题
-                const gldown = tr.querySelector(".gldown");
-                const torrentImg = gldown.querySelector('img');
-                const torrentImgSrc = torrentImg.attributes.getNamedItem('src').value
-                const hasTorrent = torrentImgSrc.includes("g/t.png");
-                if(GM_config.get('USE_TORRENT_POP_LIST') && hasTorrent) {
-                    torrentsPopDetail(gldown, gid, token, true, listType == 't');
-                }
-            });
-        }
-    }
-
-
-    monitorTask.start();
-
-    if(GM_config.get('USE_ONE_CLICK_DOWNLOAD')) {
-        Tool.addStyle(ONE_CLICK_STYLE);
-        const trList = document.querySelectorAll(".itg tr, .itg .gl1t");
-        if(trList && trList.length) {
-            trList.forEach(tr => {
-                let a = tr.querySelector(".glname a, .gl1e a, .gl1t");
-                if(tr.classList.contains('gl1t')) a = tr.querySelector('a');
-                if(!a) return;
-                const link = a.href;
-                const gid = Tool.urlGetGId(a.href);
-                let gldown = tr.querySelector(".gldown");
-                gldown.appendChild(oneClickButton(gid, link, null));
-            })
-        }
-        if(IS_GALLERY_DETAIL_PAGE) {
-            const gldown = document.querySelector(".g2.gsp");
-            const a = document.querySelector(".g2.gsp a");
-            const archiverLinkMatch = /'(https:\/\/e.hentai\.org\/archiver\.php?.*?)'/i.exec(a.onclick.toString());
-            const archiverLink = Tool.htmlDecodeByRegExp(archiverLinkMatch[1]).replace("--", "-");
-            gldown.appendChild(oneClickButton(GID, null, archiverLink));
-        }
-    }
-
-})();
 
 
 function oneClickButton(gid, pageLink, archiverLink) {
@@ -896,7 +793,7 @@ function oneClickButton(gid, pageLink, archiverLink) {
                 archiverLink = Tool.htmlDecodeByRegExp(archiverLinkMatch[1]).replace("--", "-");
             }
             let formData = new FormData();
-            formData.append("dltype", GM_config.get('ONE_CLICK_DOWNLOAD_DLTYPE').slice(0, 3));
+            formData.append("dltype", gmc.get('ONE_CLICK_DOWNLOAD_DLTYPE').slice(0, 3));
             formData.append("dlcheck","Download Original Archive");
             const archiverHtml = await fetch(
                 archiverLink,
@@ -904,7 +801,7 @@ function oneClickButton(gid, pageLink, archiverLink) {
             ).then(v => v.text());
             const downloadLinkMatch = /"(http.*?\.hath.network\/archive.*?)"/i.exec(archiverHtml);
             const downloadLink = downloadLinkMatch[1] + '?start=1';
-            const taskId = await ariaClient.addUri(downloadLink, GM_config.get('ARIA2_DIR'));
+            const taskId = await ariaClient.addUri(downloadLink, gmc.get('ARIA2_DIR'));
             Tool.setTaskId(gid, taskId);
             oneClick.innerHTML = "✔";
             setTimeout(() => {
@@ -939,15 +836,19 @@ async function getTorrentList(gid, token, lifeTime = 0) {
         const getValueText = (text = '') => (text.match(/:(.*)/) || ['',''])[1].trim();
         const sizeText = getValueText(size.textContent);
         const sizeNumber = getNumber(sizeText);
-        const unit = [sizeText.match(/[KMGT]B/) || ['']][0];
+        const unit = [sizeText.match(/[KMGT]i?B/) || ['']][0];
         const magnification = {
-            "KB": 1024,
-            "MB": 1024 * 1024,
-            "GB": 1024 * 1024 * 1024,
-            "TB": 1024 * 1024 * 1024 * 1024,
+            "KB": 1000,
+            "MB": 1000 * 1000,
+            "GB": 1000 * 1000 * 1000,
+            "TB": 1000 * 1000 * 1000 * 1000,
+            "KiB": 1024,
+            "MiB": 1024 * 1024,
+            "GiB": 1024 * 1024 * 1024,
+            "TiB": 1024 * 1024 * 1024 * 1024,
         }
         if(!magnification[unit]) {
-            console.warn("未知单位: ", size);
+            console.warn("未知单位: ", unit, size);
         }
         let bytes = magnification[unit] ? sizeNumber * magnification[unit] : -1;
         const time = new Date(getValueText(posted.textContent));
@@ -983,9 +884,9 @@ async function getTorrentList(gid, token, lifeTime = 0) {
         const time = v.time.getTime();
         if(v.bytes == maxBytes) v.achievements.add("size");
         if(time == maxTime) v.achievements.add("time");
-        if(v.seeds == maxSeeds) v.achievements.add("seeds");
-        if(v.peers == maxPeers) v.achievements.add("peers");
-        if(v.downloads == maxDownloads) v.achievements.add("downloads");
+        if(v.seeds == maxSeeds && maxSeeds > 0) v.achievements.add("seeds");
+        if(v.peers == maxPeers && maxPeers > 0) v.achievements.add("peers");
+        if(v.downloads == maxDownloads && maxDownloads > 0) v.achievements.add("downloads");
         if(time < lifeTime) v.achievements.add("overdue");
     });
 
@@ -997,11 +898,10 @@ async function getTorrentList(gid, token, lifeTime = 0) {
     return list;
 }
 
-
-
 function dateStr(date = new Date()){
-    const now = new Date().getTime();
-    const time = Math.floor((now - date.getTime())/1000);
+    const today = new Date();
+    const now = today.getTime();
+    const time = Math.floor((now - date.getTime())/1000) + ( today.getTimezoneOffset() * 60);
     if(time <= 60){
         return '刚刚';
     }else if(time<=60*60){
@@ -1102,7 +1002,7 @@ async function torrentsPopDetail(btButtonBox, gid = GID, token = TOKEN, buttonLe
                                 event.target.innerHTML = SVG_LOADING_ICON;
                                 event.target.dataset.loading = true;
                                 try {
-                                    const taskId = await ariaClient.addUri(getTorrentLink(link), GM_config.get('ARIA2_DIR'));
+                                    const taskId = await ariaClient.addUri(getTorrentLink(link), gmc.get('ARIA2_DIR'));
                                     Tool.setTaskId(gid, taskId);
                                     event.target.innerHTML = "✔";
                                     setTimeout(() => {
@@ -1163,11 +1063,125 @@ function torrentLinkForceEhTracker (link) {
 }
 
 function getTorrentLink(link) {
-    if(GM_config.get('USE_MAGNET')) {
+    if(gmc.get('USE_MAGNET')) {
         return torrentLink2magnet(link) || link;
     }
-    if(link.includes('exhentai.org') && GM_config.get('REPLACE_EX_TORRENT_URL')) {
+    if(link.includes('exhentai.org') && gmc.get('REPLACE_EX_TORRENT_URL')) {
         return torrentLinkForceEhTracker(link) || link;
     }
     return link;
+}
+
+
+function init() {
+    ariaClient = new AriaClientLite({rpc: gmc.get('ARIA2_RPC'), secret: gmc.get('ARIA2_SECRET'), id: ARIA2_CLIENT_ID});
+    Tool.addStyle(STYLE);
+
+    const monitorTask = new MonitorTask();
+    if(GID) {
+
+        // button
+        if(IS_TORRENT_PAGE) {
+            let tableList = document.querySelectorAll("#torrentinfo form table");
+            if(tableList && tableList.length){
+                tableList.forEach(function (table) {
+                    let insertionPoint = table.querySelector('input');
+                    if(!insertionPoint)return;
+                    let a = table.querySelector('a');
+                    if(!a) return;
+                    const link = a.href;
+                    const button = new SendTaskButton(GID, link);
+                    insertionPoint.parentNode.insertBefore(button.element, insertionPoint);
+                });
+            }
+        }
+
+        if (IS_HATH_ARCHIVE_PAGE) {
+            let insertionPoint = document.querySelector("#db a");
+            if(!insertionPoint)return;
+            const link = insertionPoint.href;
+            const button = new SendTaskButton(GID, link);
+            button.element.style.marginTop = '16px';
+            insertionPoint.parentNode.insertBefore(button.element, insertionPoint);
+        }
+
+        // 状态监听
+        const taskStatusUi = monitorTask.addGid(GID);
+        if (IS_HATH_ARCHIVE_PAGE && gmc.get('USE_HATH_ARCHIVE_TASK_STATUS')) {
+            taskStatusUi.element.style.marginTop = '8px';
+            const insertionPoint = document.querySelector('#db strong');
+            if(insertionPoint) insertionPoint.parentElement.insertBefore(taskStatusUi.element, insertionPoint.nextElementSibling);
+        }
+        if (IS_GALLERY_DETAIL_PAGE && gmc.get('USE_GALLERY_DETAIL_TASK_STATUS')) {
+            const insertionPoint = document.querySelector('#gd2');
+            if(insertionPoint) insertionPoint.appendChild(taskStatusUi.element);
+        }
+        if (IS_TORRENT_PAGE && gmc.get('USE_TORRENT_TASK_STATUS')) {
+            const insertionPoint = document.querySelector('#torrentinfo p');
+            if(insertionPoint) insertionPoint.parentElement.insertBefore(taskStatusUi.element, insertionPoint.nextElementSibling);
+        }
+        if(IS_GALLERY_DETAIL_PAGE && gmc.get('USE_TORRENT_POP_LIST')) {
+            torrentsPopDetail();
+        }
+    } else if(gmc.get('USE_LIST_TASK_STATUS')) {
+        const trList = document.querySelectorAll(".itg tr, .itg .gl1t");
+        if(trList && trList.length) {
+            const insertionPointMap = {};
+            let textAlign = 'left';
+            trList.forEach(function (tr) {
+                let glname = tr.querySelector(".gl3e, .glname");
+                let a = tr.querySelector(".glname a, .gl1e a, .gl1t");
+                if(tr.classList.contains('gl1t')) {
+                    glname = tr;
+                    a = tr.querySelector('a');
+                    textAlign = 'center';
+                }
+                if(!(glname && a)) return;
+                const gid = Tool.urlGetGId(a.href);
+                const token = Tool.urlGetToken(a.href);
+                insertionPointMap[gid] = glname;
+                const statusUI = monitorTask.addGid(gid);
+                statusUI.element.style.textAlign = textAlign;
+                glname.appendChild(statusUI.element);
+
+                const listTypeDom = document.querySelector("#dms select > option[selected]");
+                const listType = listTypeDom ? listTypeDom.value : '';
+                if(listType == 't') return; // 暂时不支持缩略图模式,显示问题
+                const gldown = tr.querySelector(".gldown");
+                const torrentImg = gldown.querySelector('img');
+                const torrentImgSrc = torrentImg.attributes.getNamedItem('src').value
+                const hasTorrent = torrentImgSrc.includes("g/t.png");
+                if(gmc.get('USE_TORRENT_POP_LIST') && hasTorrent) {
+                    torrentsPopDetail(gldown, gid, token, true, listType == 't');
+                }
+            });
+        }
+    }
+
+
+    monitorTask.start();
+
+    if(gmc.get('USE_ONE_CLICK_DOWNLOAD')) {
+        Tool.addStyle(ONE_CLICK_STYLE);
+        const trList = document.querySelectorAll(".itg tr, .itg .gl1t");
+        if(trList && trList.length) {
+            trList.forEach(tr => {
+                let a = tr.querySelector(".glname a, .gl1e a, .gl1t");
+                if(tr.classList.contains('gl1t')) a = tr.querySelector('a');
+                if(!a) return;
+                const link = a.href;
+                const gid = Tool.urlGetGId(a.href);
+                let gldown = tr.querySelector(".gldown");
+                gldown.appendChild(oneClickButton(gid, link, null));
+            })
+        }
+        if(IS_GALLERY_DETAIL_PAGE) {
+            const gldown = document.querySelector(".g2.gsp");
+            const a = document.querySelector(".g2.gsp a");
+            const archiverLinkMatch = /'(https:\/\/e.hentai\.org\/archiver\.php?.*?)'/i.exec(a.onclick.toString());
+            const archiverLink = Tool.htmlDecodeByRegExp(archiverLinkMatch[1]).replace("--", "-");
+            gldown.appendChild(oneClickButton(GID, null, archiverLink));
+        }
+    }
+
 }
