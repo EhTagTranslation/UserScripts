@@ -1,14 +1,15 @@
 // ==UserScript==
 // @name         eh磁力链助手
 // @namespace    com.xioxin.EhTagMagnetHelper
-// @version      0.2
+// @version      0.3
 // @description  在种子列表直接复制磁力链
 // @author       xioxin
+// @icon         https://e-hentai.org/favicon.ico
 // @homepage     https://github.com/EhTagTranslation/UserScripts
 // @supportURL   https://github.com/EhTagTranslation/UserScripts/issues
-// @include     *://exhentai.org/gallerytorrents.php*
-// @include     *://e-hentai.org/gallerytorrents.php*
-// @grant       GM_setClipboard
+// @match        *://exhentai.org/gallerytorrents.php*
+// @match        *://e-hentai.org/gallerytorrents.php*
+// @grant        GM_setClipboard
 // ==/UserScript==
 
 (function() {
