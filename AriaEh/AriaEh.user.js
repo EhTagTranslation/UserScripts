@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EhAria2下载助手
 // @namespace    com.xioxin.AriaEh
-// @version      1.1
+// @version      1.2
 // @description  发送任务到Aria2,并查看下载进度
 // @author       xioxin, SchneeHertz
 // @homepage     https://github.com/EhTagTranslation/UserScripts
@@ -1085,7 +1085,7 @@ function init() {
             let tableList = document.querySelectorAll("#torrentinfo form table");
             if(tableList && tableList.length){
                 tableList.forEach(function (table) {
-                    let insertionPoint = table.querySelector('input');
+                    let insertionPoint = table.querySelector('input[type="submit"],button[type="submit"]');
                     if(!insertionPoint)return;
                     let a = table.querySelector('a');
                     if(!a) return;
