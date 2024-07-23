@@ -11,6 +11,11 @@ EhAria2下载助手
   * 点击名字下载种子
   * 点击下载按钮发送任务到Aria2
 
+## 已知问题
+* 一键下载功能无法正确下载，下载后无文件名
+  * 情况1：E站的归档设置没有设置为“手动选择，手动下载（默认）”（目前没有精力处理此问题，欢迎PR）[#6](https://github.com/EhTagTranslation/UserScripts/issues/6#issuecomment-1214385546)
+  * 情况2：开启aria2配置中的 “获取服务器文件时间” 和 “使用UTF-8处理Content-Disposition” [#6](https://github.com/EhTagTranslation/UserScripts/issues/6#issuecomment-1214412506)
+
 ## 预览
 
 ### 列表页面下载状态与一键下载
