@@ -1,15 +1,15 @@
 // ==UserScript==
 // @name         eh详情页标签颜色
 // @namespace    com.xioxin.tag-color
-// @version      0.6
+// @version      0.7
 // @description  eh为详情页标签增加颜色
 // @author       xioxin
 // @homepage     https://github.com/EhTagTranslation/UserScripts
 // @supportURL   https://github.com/EhTagTranslation/UserScripts/issues
-// @include     *://exhentai.org/g/*
-// @include     *://e-hentai.org/g/*
-// @include     *://exhentai.org/mytags
-// @include     *://e-hentai.org/mytags
+// @match     *://exhentai.org/g/*
+// @match     *://e-hentai.org/g/*
+// @match     *://exhentai.org/mytags
+// @match     *://e-hentai.org/mytags
 // @grant    GM_addStyle
 // @grant    GM_getValue
 // @grant    GM_setValue
@@ -25,7 +25,7 @@ if(typeof GM_addStyle == 'undefined') {
         var style = document.createElement("style");
         style.type = "text/css";
         style.innerHTML=script
-        document.getElementsByTagName("HEAD").item(0).appendChild(style); 
+        document.getElementsByTagName("HEAD").item(0).appendChild(style);
     }
 }
 if(typeof GM_setValue == 'undefined') {
@@ -79,13 +79,35 @@ async function dyeing() {
     const myTags = GM_getValue("myTags", []);
     let css = '';
     myTags.forEach(v => {
+        const key = v.tag.replaceAll(' ', '_');
         css += `
-        [id="td_${v.tag.replaceAll(' ', '_')}"]{
+        [id="td_${key}"]{
             border-color: ${v.borderColor} !important;
             background: ${v.background} !important;
         }
-        [id="td_${v.tag.replaceAll(' ', '_')}"] a {
+        [id="td_${key}"].gtw, [id="td_${key}"].gtl{
+            outline: solid 1px ${v.borderColor};
+            border-color: ${v.color} !important;
+        }
+        [id="td_${key}"] a {
             color: ${v.color};
+        }
+        .tup::after, .tdn::after {
+            display: inline-block;
+            color: #fff;
+            border-radius: 4px;
+            margin-left: 4px;
+            margin-right: -2px;
+            background-color: green;
+            content: '';
+            line-height: 14px;
+            outline: solid 1px #fff;
+            vertical-align: sub;
+            width: 4px;
+            height: 14px;
+        }
+        .tdn::after {
+            background-color: red;
         }
         `
     });
