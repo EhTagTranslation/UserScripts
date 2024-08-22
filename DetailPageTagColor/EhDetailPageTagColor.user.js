@@ -84,8 +84,28 @@ async function dyeing() {
             border-color: ${v.borderColor} !important;
             background: ${v.background} !important;
         }
+        [id="td_${v.tag.replaceAll(' ', '_')}"].gtw, [id="td_${v.tag.replaceAll(' ', '_')}"].gtl{
+            outline: solid 1px ${v.borderColor};
+            border-color: ${v.color} !important;
+        }
         [id="td_${v.tag.replaceAll(' ', '_')}"] a {
             color: ${v.color};
+        }
+        .tup::after {
+            display: inline-block;
+            background-color: green;
+            color: #fff;
+            border-radius: 2px;
+            margin-left: 2px;
+            content: '↾';
+        }
+        .tdn::after {
+            background-color: red;
+            color: #fff;
+            border-radius: 2px;
+            display: inline-block;
+            margin-left: 2px;
+            content: '⇂';
         }
         `
     });
