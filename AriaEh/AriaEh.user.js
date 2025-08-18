@@ -349,6 +349,9 @@ const ONE_CLICK_STYLE = `
 #btList tr>td:last-child, #btList tr>th:last-child {
     padding-right: 8px;
 }
+#gd5 .g2 {
+    padding-bottom: 20px;
+}
 `;
 
 const SVG_LOADING_ICON = `<svg style="margin: auto; display: block; shape-rendering: auto;" width="24px" height="24px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid">
