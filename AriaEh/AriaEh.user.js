@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EhAria2下载助手
 // @namespace    com.xioxin.AriaEh
-// @version      1.2
+// @version      1.2.1
 // @description  发送任务到Aria2,并查看下载进度
 // @author       xioxin, SchneeHertz
 // @homepage     https://github.com/EhTagTranslation/UserScripts
@@ -348,9 +348,6 @@ const ONE_CLICK_STYLE = `
 }
 #btList tr>td:last-child, #btList tr>th:last-child {
     padding-right: 8px;
-}
-#gd5 .g2 {
-    padding-bottom: 20px;
 }
 `;
 
@@ -793,16 +790,20 @@ function oneClickButton(gid, pageLink, archiverLink) {
             if (pageLink && !archiverLink) {
                 const g = await fetch(pageLink, { credentials: "include" }).then(v => v.text());
                 const archiverLinkMatch = /'(https:\/\/e.hentai\.org\/archiver\.php?.*?)'/i.exec(g);
+                if (!archiverLinkMatch) throw new Error("未找到存档页面链接");
                 archiverLink = Tool.htmlDecodeByRegExp(archiverLinkMatch[1]).replace("--", "-");
             }
-            let formData = new FormData();
+            const formData = new URLSearchParams();
             formData.append("dltype", gmc.get('ONE_CLICK_DOWNLOAD_DLTYPE').slice(0, 3));
             formData.append("dlcheck","Download Original Archive");
-            const archiverHtml = await fetch(
+            const response = await fetch(
                 archiverLink,
                 {method: "POST", credentials: "include", body: formData}
-            ).then(v => v.text());
+            );
+            if (!response.ok) throw new Error(`存档请求失败 HTTP ${response.status}`);
+            const archiverHtml = await response.text();
             const downloadLinkMatch = /"(http.*?\.hath.network\/archive.*?)"/i.exec(archiverHtml);
+            if (!downloadLinkMatch) throw new Error("存档页面未返回下载链接，请打开存档下载页面查看详情");
             const downloadLink = downloadLinkMatch[1] + '?start=1';
             const taskId = await ariaClient.addUri(downloadLink, gmc.get('ARIA2_DIR'));
             Tool.setTaskId(gid, taskId);
